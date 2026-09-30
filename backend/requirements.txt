@@ -1,0 +1,20 @@
+# Core Flask
+Flask==3.0.3
+Flask-Cors==4.0.1
+
+# Database & ORM
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.7
+PyMySQL==1.1.1
+cryptography==42.0.8
+
+# Authentication
+Flask-JWT-Extended==4.6.0
+Werkzeug==3.0.3
+
+# Validation & Serialization
+marshmallow==3.21.3
+marshmallow-sqlalchemy==1.0.0
+
+# Environment
+python-dotenv==1.0.1
