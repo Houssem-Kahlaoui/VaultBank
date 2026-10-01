@@ -1,4 +1,3 @@
-
 from .auth_schema import (
     RegisterSchema,
     LoginSchema,
@@ -8,6 +7,7 @@ from .auth_schema import (
 from .transaction_schema import TransferSchema
 from .loan_schema import LoanRequestSchema
 from .user_schema import UpdateProfileSchema
+from .manager_schema import ApproveSchema, RejectSchema
 
 
 __all__ = [
@@ -18,4 +18,6 @@ __all__ = [
     'TransferSchema',
     'LoanRequestSchema',
     'UpdateProfileSchema',
+    'ApproveSchema',
+    'RejectSchema',
 ]

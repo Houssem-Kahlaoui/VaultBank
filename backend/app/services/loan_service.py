@@ -1,4 +1,8 @@
+"""
+Loan service — handle customer loan requests and manager decisions.
+"""
 from datetime import datetime
+from decimal import Decimal
 from ..extensions import db
 from ..models.loan import LoanRequest
 from ..models.account import Account
@@ -7,15 +11,23 @@ from . import notification_service
 
 
 def create_loan_request(user_id, amount, duration_months, purpose=''):
+    """
+    Create a new loan request from a customer.
+    """
+    # Convert amount to Decimal
+    try:
+        amount = Decimal(str(amount))
+    except Exception:
+        return None, 'Montant invalide.'
 
     # Validations
     if amount <= 0:
         return None, 'Le montant doit être positif.'
     if duration_months <= 0:
         return None, 'La durée doit être positive.'
-    if amount < 10000:
+    if amount < Decimal('10000'):
         return None, 'Le montant minimum est de 10 000 DNT.'
-    if amount > 10000000:
+    if amount > Decimal('10000000'):
         return None, 'Le montant maximum est de 10 000 000 DNT.'
 
     loan = LoanRequest(
@@ -31,7 +43,7 @@ def create_loan_request(user_id, amount, duration_months, purpose=''):
     notification_service.create_notification(
         user_id=user_id,
         title='Demande de prêt soumise',
-        message=f'Votre demande de {amount:.2f} DNT a bien été reçue.',
+        message=f'Votre demande de {float(amount):.2f} DNT a bien été reçue.',
     )
 
     audit_service.log_action(
@@ -43,7 +55,9 @@ def create_loan_request(user_id, amount, duration_months, purpose=''):
 
 
 def approve_loan(loan_id, manager_id, comment=''):
-
+    """
+    Approve a loan and credit the customer's main account.
+    """
     loan = LoanRequest.query.get(loan_id)
     if not loan:
         return None, 'Demande introuvable.'
@@ -62,7 +76,7 @@ def approve_loan(loan_id, manager_id, comment=''):
         return None, 'Aucun compte courant trouvé pour ce client.'
 
     try:
-        account.balance += loan.amount
+        account.balance = account.balance + loan.amount
         loan.status = 'approved'
         loan.reviewed_by = manager_id
         loan.reviewed_at = datetime.utcnow()
@@ -87,7 +101,9 @@ def approve_loan(loan_id, manager_id, comment=''):
 
 
 def reject_loan(loan_id, manager_id, comment=''):
-
+    """
+    Reject a loan request.
+    """
     loan = LoanRequest.query.get(loan_id)
     if not loan:
         return None, 'Demande introuvable.'
@@ -116,6 +132,7 @@ def reject_loan(loan_id, manager_id, comment=''):
 
 
 def get_user_loans(user_id):
+    """Return all loan requests from a user, newest first."""
     return (
         LoanRequest.query
         .filter_by(user_id=user_id)
@@ -125,8 +142,10 @@ def get_user_loans(user_id):
 
 
 def get_all_loans():
+    """Return all loan requests (manager view)."""
     return LoanRequest.query.order_by(LoanRequest.created_at.desc()).all()
 
 
 def get_loan_by_id(loan_id):
+    """Return a loan request by ID, or None."""
     return LoanRequest.query.get(loan_id)

@@ -1,4 +1,8 @@
+"""
+Transaction service — handle money transfers between accounts.
+"""
 from datetime import datetime
+from decimal import Decimal
 from ..extensions import db
 from ..models.account import Account
 from ..models.transaction import Transaction
@@ -6,10 +10,18 @@ from . import audit_service
 from . import notification_service
 
 
+# ──────────────────────── Create ────────────────────────
 
 def create_transfer(from_account_id, to_account_number, amount, user_id, description=''):
+    """
+    Create a pending transfer request from a customer.
+    """
+    # Convert amount to Decimal
+    try:
+        amount = Decimal(str(amount))
+    except Exception:
+        return None, 'Montant invalide.'
 
-    # Validate amount
     if amount <= 0:
         return None, 'Montant invalide.'
 
@@ -21,8 +33,8 @@ def create_transfer(from_account_id, to_account_number, amount, user_id, descrip
     if from_account.status != 'active':
         return None, 'Ce compte est gelé ou fermé.'
 
-    # Check sufficient balance
-    if float(from_account.balance) < amount:
+    # Check sufficient balance (Decimal comparison)
+    if from_account.balance < amount:
         return None, 'Solde insuffisant.'
 
     # Validate destination
@@ -63,9 +75,12 @@ def create_transfer(from_account_id, to_account_number, amount, user_id, descrip
     return tx, None
 
 
+# ──────────────────────── Manager actions ────────────────────────
 
 def approve_transfer(tx_id, manager_id):
-
+    """
+    Approve a pending transfer. Executes the money movement.
+    """
     tx = Transaction.query.get(tx_id)
     if not tx:
         return None, 'Transaction introuvable.'
@@ -79,14 +94,14 @@ def approve_transfer(tx_id, manager_id):
     if not from_account or not to_account:
         return None, 'Compte source ou destination introuvable.'
 
-    # Re-check balance (in case it changed since request)
-    if float(from_account.balance) < float(tx.amount):
+    # Re-check balance (Decimal comparison)
+    if from_account.balance < tx.amount:
         return None, 'Solde insuffisant dans le compte source.'
 
     # Execute transfer — atomic
     try:
-        from_account.balance -= tx.amount
-        to_account.balance += tx.amount
+        from_account.balance = from_account.balance - tx.amount
+        to_account.balance = to_account.balance + tx.amount
         tx.status = 'completed'
         tx.reviewed_by = manager_id
         tx.reviewed_at = datetime.utcnow()
@@ -116,7 +131,9 @@ def approve_transfer(tx_id, manager_id):
 
 
 def reject_transfer(tx_id, manager_id, comment=''):
-
+    """
+    Reject a pending transfer.
+    """
     tx = Transaction.query.get(tx_id)
     if not tx:
         return None, 'Transaction introuvable.'
@@ -148,8 +165,10 @@ def reject_transfer(tx_id, manager_id, comment=''):
     return tx, None
 
 
+# ──────────────────────── Read ────────────────────────
 
 def get_pending_transfers():
+    """Return all pending transactions."""
     return (
         Transaction.query
         .filter_by(status='pending')
@@ -159,8 +178,9 @@ def get_pending_transfers():
 
 
 def get_user_transactions(user_id, tx_type=None, status=None, limit=None):
-
-    # Get all user account IDs
+    """
+    Return all transactions involving any account of this user.
+    """
     account_ids = [a.id for a in Account.query.filter_by(user_id=user_id).all()]
     if not account_ids:
         return []
@@ -185,6 +205,7 @@ def get_user_transactions(user_id, tx_type=None, status=None, limit=None):
 
 
 def get_all_transactions(status=None):
+    """Return all transactions (admin view)."""
     query = Transaction.query
     if status:
         query = query.filter(Transaction.status == status)
@@ -192,4 +213,5 @@ def get_all_transactions(status=None):
 
 
 def get_transaction_by_id(tx_id):
+    """Return a transaction by ID, or None."""
     return Transaction.query.get(tx_id)

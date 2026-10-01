@@ -1,9 +1,14 @@
+"""
+Account service — CRUD and operations on bank accounts.
+"""
+from decimal import Decimal
 from ..extensions import db
 from ..models.account import Account
 from ..models.user import User
 from . import audit_service
 
 
+# ──────────────────────── Read ────────────────────────
 
 def get_account_by_id(account_id):
     """Return an account by ID, or None."""
@@ -16,6 +21,7 @@ def get_account_by_number(account_number):
 
 
 def get_user_accounts(user_id):
+    """Return all accounts belonging to a user, oldest first."""
     return (
         Account.query
         .filter_by(user_id=user_id)
@@ -25,6 +31,7 @@ def get_user_accounts(user_id):
 
 
 def get_all_accounts_with_users():
+    """Return all accounts (with owner info) for admin/manager views."""
     return (
         Account.query
         .join(User, Account.user_id == User.id)
@@ -33,9 +40,12 @@ def get_all_accounts_with_users():
     )
 
 
+# ──────────────────────── Write ────────────────────────
 
 def update_account_status(account_id, new_status, performer_id=None):
-
+    """
+    Change an account's status (active / frozen / closed).
+    """
     if new_status not in ('active', 'frozen', 'closed'):
         return None, 'Statut invalide.'
 
@@ -57,6 +67,14 @@ def update_account_status(account_id, new_status, performer_id=None):
 
 
 def credit_account(account_id, amount, performer_id=None, description='Dépôt administratif'):
+    """
+    Add funds to an account (admin action).
+    """
+    # Convert amount to Decimal (safe conversion via string)
+    try:
+        amount = Decimal(str(amount))
+    except Exception:
+        return None, 'Montant invalide.'
 
     if amount <= 0:
         return None, 'Le montant doit être positif.'
@@ -68,7 +86,7 @@ def credit_account(account_id, amount, performer_id=None, description='Dépôt a
     if account.status != 'active':
         return None, 'Impossible de créditer un compte inactif.'
 
-    account.balance += amount
+    account.balance = account.balance + amount
     db.session.commit()
 
     if performer_id:
