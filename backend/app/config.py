@@ -7,7 +7,7 @@ load_dotenv()
 class Config:
 
     #flask
-    SERCRET_KEY =os.getenv('SERCRET_KEY','fallback-secret-key')
+    SERCRET_KEY =os.getenv('SECRET_KEY','fallback-secret-key')
     #BD 
     DB_USER = os.getenv('DB_USER', 'root')
     DB_PASSWORD = os.getenv('DB_PASSWORD', '')

@@ -19,13 +19,18 @@ def create_app():
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     )
 
+    from .routes import auth_bp
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    from .routes import auth_bp, customer_bp
+    app.register_blueprint(auth_bp,     url_prefix='/api/auth')
+    app.register_blueprint(customer_bp, url_prefix='/api/customer')
 
-    @app.route('/api/test')
-    def test():
+    @app.route('/api/health')
+    def health():
         return jsonify({
             'status': 'ok',
             'service': 'VaultBank API',
-            'version': '1.0.0'
+            'version': '1.0.0',
         }), 200
 
     @app.errorhandler(404)
