@@ -1,13 +1,17 @@
+
 from flask import Flask, jsonify
 from .config import Config
 from .extensions import db, migrate, jwt, cors
 
 
 def create_app():
+
     app = Flask(__name__)
 
+    # ── Load configuration ──
     app.config.from_object(Config)
 
+    # ── Initialize extensions ──
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
@@ -19,11 +23,14 @@ def create_app():
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     )
 
-    from .routes import auth_bp, customer_bp, manager_bp
+    # ── Register blueprints ──
+    from .routes import auth_bp, customer_bp, manager_bp, admin_bp
     app.register_blueprint(auth_bp,     url_prefix='/api/auth')
     app.register_blueprint(customer_bp, url_prefix='/api/customer')
     app.register_blueprint(manager_bp,  url_prefix='/api/manager')
+    app.register_blueprint(admin_bp,    url_prefix='/api/admin')
 
+    # ── Health check ──
     @app.route('/api/health')
     def health():
         return jsonify({
@@ -32,6 +39,7 @@ def create_app():
             'version': '1.0.0',
         }), 200
 
+    # ── Global error handlers ──
     @app.errorhandler(404)
     def not_found(e):
         return jsonify({'error': 'Resource not found'}), 404
@@ -41,6 +49,7 @@ def create_app():
         db.session.rollback()
         return jsonify({'error': 'Internal server error'}), 500
 
+    # ── JWT error handlers ──
     @jwt.unauthorized_loader
     def missing_token(reason):
         return jsonify({'error': 'Missing or invalid token', 'details': reason}), 401
