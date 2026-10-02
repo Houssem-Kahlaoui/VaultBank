@@ -1,0 +1,372 @@
+{% extends "base.html" %}
+
+{% block title %}Espace Gestionnaire — VaultBank{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ═══════════ LAYOUT ═══════════ */
+  .app-layout { display: flex; min-height: 100vh; }
+
+  /* ═══════════ SIDEBAR ═══════════ */
+  .sidebar {
+    width: 260px; min-height: 100vh;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    position: fixed; top: 0; left: 0; z-index: 100;
+    backdrop-filter: blur(20px);
+    transition: width 0.3s var(--ease);
+  }
+  .sidebar.collapsed { width: 72px; }
+  .sidebar.collapsed .logo-text,
+  .sidebar.collapsed .nav-label,
+  .sidebar.collapsed .user-details,
+  .sidebar.collapsed .sidebar-section-title { display: none; }
+  .sidebar.collapsed .nav-link { justify-content: center; padding: 14px; }
+
+  .sidebar-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 18px; border-bottom: 1px solid var(--border);
+  }
+  .sidebar-toggle {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); font-size: 18px; padding: 4px;
+    transition: var(--trans);
+  }
+  .sidebar-toggle:hover { color: var(--purple); }
+
+  .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+  .sidebar-section-title {
+    font-size: 10px; font-weight: 600;
+    color: var(--text-dim); letter-spacing: 1.5px;
+    padding: 16px 20px 6px; text-transform: uppercase;
+  }
+  .nav-link {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 18px; margin: 2px 10px;
+    border-radius: var(--r);
+    color: var(--text-muted); font-size: 14px; font-weight: 500;
+    transition: var(--trans); cursor: pointer;
+    position: relative; text-decoration: none;
+  }
+  .nav-link i { font-size: 18px; flex-shrink: 0; }
+  .nav-link:hover { background: var(--bg-card-hov); color: var(--text); }
+  .nav-link.active {
+    background: linear-gradient(135deg, rgba(168,85,247,0.18), rgba(79,172,254,0.08));
+    color: var(--purple);
+    border: 1px solid rgba(168,85,247,0.2);
+  }
+  .nav-link.active::before {
+    content: ''; position: absolute; left: 0; top: 20%; bottom: 20%;
+    width: 3px; border-radius: 0 3px 3px 0; background: var(--purple);
+  }
+  .nav-badge {
+    margin-left: auto; background: var(--danger);
+    color: #fff; font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 20px; min-width: 20px;
+    text-align: center;
+  }
+
+  .sidebar-footer {
+    border-top: 1px solid var(--border);
+    padding: 16px 18px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .user-info { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--purple), var(--blue));
+    display: grid; place-items: center;
+    font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .user-details { overflow: hidden; }
+  .user-name {
+    display: block; font-size: 13px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .user-role { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 8px; border-radius: 20px; margin-top: 2px; }
+  .logout-btn { color: var(--text-muted); font-size: 20px; padding: 6px; border-radius: 8px; transition: var(--trans); }
+  .logout-btn:hover { color: var(--danger); background: rgba(255,71,87,0.1); }
+
+  /* ═══════════ MAIN ═══════════ */
+  .main-content {
+    margin-left: 260px; flex: 1;
+    display: flex; flex-direction: column;
+    transition: margin-left 0.3s var(--ease);
+  }
+  .main-content.expanded { margin-left: 72px; }
+
+  .topbar {
+    height: 64px;
+    background: rgba(10,16,32,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .page-title { font-size: 18px; font-weight: 700; }
+
+  .content-wrapper { padding: 28px; flex: 1; }
+
+  /* ═══════════ STATS ═══════════ */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
+    gap: 18px; margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 22px;
+    display: flex; align-items: center; gap: 16px;
+    transition: var(--trans); cursor: pointer;
+  }
+  .stat-card:hover { border-color: var(--border-hov); transform: translateY(-2px); }
+  .stat-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: grid; place-items: center; font-size: 22px; flex-shrink: 0;
+  }
+  .stat-icon.blue   { background: rgba(79,172,254,0.15); color: var(--blue); }
+  .stat-icon.teal   { background: rgba(0,201,167,0.15);  color: var(--teal); }
+  .stat-icon.purple { background: rgba(168,85,247,0.15); color: var(--purple); }
+  .stat-icon.amber  { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .stat-icon.danger { background: rgba(255,71,87,0.15);  color: var(--danger); }
+  .stat-info .stat-value { font-size: 26px; font-weight: 800; letter-spacing: -1px; }
+  .stat-info .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ═══════════ PAGE HEADER ═══════════ */
+  .page-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 24px; gap: 16px; flex-wrap: wrap;
+  }
+  .page-header-info h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .page-header-info p  { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+  /* ═══════════ PENDING CARDS ═══════════ */
+  .pending-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: var(--r-lg);
+    padding: 22px; margin-bottom: 16px;
+  }
+  .pending-amount {
+    font-size: 28px; font-weight: 900; letter-spacing: -1px;
+    color: var(--text);
+  }
+  .account-box {
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .account-box .label {
+    font-size: 11px; color: var(--text-muted);
+    margin-bottom: 4px; letter-spacing: 0.5px;
+  }
+
+  /* ═══════════ ACCOUNT LIST ═══════════ */
+  .acc-row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* ═══════════ MODAL ═══════════ */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    display: none; place-items: center;
+  }
+  .modal-overlay.open { display: grid; }
+  .modal {
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: var(--r-xl); padding: 28px;
+    width: min(480px, 95vw); max-height: 90vh; overflow-y: auto;
+    animation: modalIn 0.25s var(--ease);
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .modal-title { font-size: 17px; font-weight: 700; }
+  .modal-close { background: none; border: none; cursor: pointer; font-size: 20px; color: var(--text-muted); }
+  .modal-close:hover { color: var(--danger); }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+  /* ═══════════ TABLE ═══════════ */
+  .table-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+  }
+
+  /* ═══════════ RESPONSIVE ═══════════ */
+  @media (max-width: 900px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.mobile-open { transform: translateX(0); }
+    .main-content { margin-left: 0; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="app-layout">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="/manager" class="logo">
+        <div class="logo-icon"><i class="bi bi-bank2"></i></div>
+        <span class="logo-text">VaultBank</span>
+      </a>
+      <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-title">Gestion</div>
+      <a href="#dashboard" class="nav-link"><i class="bi bi-speedometer2"></i><span class="nav-label">Tableau de bord</span></a>
+      <a href="#transfers" class="nav-link">
+        <i class="bi bi-hourglass-split"></i>
+        <span class="nav-label">Virements en attente</span>
+        <span class="nav-badge" id="pendingTransfersBadge" style="display:none">0</span>
+      </a>
+      <a href="#loans" class="nav-link">
+        <i class="bi bi-cash-stack"></i>
+        <span class="nav-label">Demandes de prêts</span>
+        <span class="nav-badge" id="pendingLoansBadge" style="display:none">0</span>
+      </a>
+      <a href="#accounts" class="nav-link"><i class="bi bi-wallet2"></i><span class="nav-label">Comptes clients</span></a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar" data-user-initial>G</div>
+        <div class="user-details">
+          <span class="user-name" data-user-name>Gestionnaire</span>
+          <span class="user-role badge-gestionnaire">Gestionnaire</span>
+        </div>
+      </div>
+      <a href="#" onclick="logout(); return false" class="logout-btn" title="Déconnexion">
+        <i class="bi bi-box-arrow-right"></i>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="main-content" id="mainContent">
+    <header class="topbar">
+      <h1 class="page-title" id="pageTitle">Tableau de bord</h1>
+    </header>
+
+    <div class="content-wrapper">
+
+      <!-- ═══════════ PAGE: DASHBOARD ═══════════ -->
+      <div id="page-dashboard" class="page active">
+        <div id="dashboardContent">
+          <div class="loading">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- ═══════════ PAGE: TRANSFERS ═══════════ -->
+      <div id="page-transfers" class="page">
+        <div class="page-header">
+          <div class="page-header-info">
+            <h2>Virements en attente</h2>
+            <p id="pendingCount">Chargement...</p>
+          </div>
+        </div>
+        <div id="transfersContent">
+          <div class="loading">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- ═══════════ PAGE: LOANS ═══════════ -->
+      <div id="page-loans" class="page">
+        <div class="page-header">
+          <div class="page-header-info">
+            <h2>Demandes de prêts</h2>
+            <p id="loansCount">Chargement...</p>
+          </div>
+        </div>
+        <div class="filter-bar" style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+          <button class="btn btn-sm btn-ghost loan-filter active" data-filter="all" onclick="filterLoans('all', this)">Toutes</button>
+          <button class="btn btn-sm btn-ghost loan-filter" data-filter="pending" onclick="filterLoans('pending', this)">En attente</button>
+          <button class="btn btn-sm btn-ghost loan-filter" data-filter="approved" onclick="filterLoans('approved', this)">Approuvés</button>
+          <button class="btn btn-sm btn-ghost loan-filter" data-filter="rejected" onclick="filterLoans('rejected', this)">Refusés</button>
+        </div>
+        <div id="loansContent">
+          <div class="loading">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- ═══════════ PAGE: ACCOUNTS ═══════════ -->
+      <div id="page-accounts" class="page">
+        <div class="page-header">
+          <div class="page-header-info">
+            <h2>Comptes clients</h2>
+            <p id="accountsCount">Chargement...</p>
+          </div>
+        </div>
+        <div style="margin-bottom:16px">
+          <input type="text" id="accSearch" class="form-control"
+                 placeholder="🔍 Rechercher par nom, email, numéro de compte..."
+                 oninput="filterAccounts(this.value)" style="max-width:400px">
+        </div>
+        <div class="table-container" id="accountsContent">
+          <div class="loading">Chargement...</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ═══════════ MODAL: REJECT TRANSFER ═══════════ -->
+  <div class="modal-overlay" id="rejectModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title"><i class="bi bi-x-circle" style="color:var(--danger)"></i> Rejeter le virement</div>
+        <button class="modal-close" onclick="closeModal('rejectModal')"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px" id="rejectModalInfo"></p>
+      <form id="rejectForm">
+        <div class="form-group">
+          <label class="form-label">Motif du rejet <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="rejectComment" class="form-control"
+                 placeholder="Ex: Solde suspect, compte inactif..." required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('rejectModal')">Annuler</button>
+          <button type="submit" class="btn btn-danger"><i class="bi bi-x-circle"></i> Confirmer le rejet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════ MODAL: REJECT LOAN ═══════════ -->
+  <div class="modal-overlay" id="rejectLoanModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title"><i class="bi bi-x-circle" style="color:var(--danger)"></i> Refuser la demande de prêt</div>
+        <button class="modal-close" onclick="closeModal('rejectLoanModal')"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px" id="rejectLoanInfo"></p>
+      <form id="rejectLoanForm">
+        <div class="form-group">
+          <label class="form-label">Motif du refus <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="rejectLoanComment" class="form-control"
+                 placeholder="Ex: Capacité de remboursement insuffisante" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('rejectLoanModal')">Annuler</button>
+          <button type="submit" class="btn btn-danger"><i class="bi bi-x-circle"></i> Confirmer le refus</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<script src="/static/js/manager.js"></script>
+{% endblock %}
