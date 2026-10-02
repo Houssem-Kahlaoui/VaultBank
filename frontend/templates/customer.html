@@ -1,0 +1,597 @@
+{% extends "base.html" %}
+
+{% block title %}Mon espace — VaultBank{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ═══════════ LAYOUT ═══════════ */
+  .app-layout { display: flex; min-height: 100vh; }
+
+  /* ═══════════ SIDEBAR ═══════════ */
+  .sidebar {
+    width: 260px;
+    min-height: 100vh;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    position: fixed; top: 0; left: 0; z-index: 100;
+    backdrop-filter: blur(20px);
+    transition: width 0.3s var(--ease);
+  }
+  .sidebar.collapsed { width: 72px; }
+  .sidebar.collapsed .logo-text,
+  .sidebar.collapsed .nav-label,
+  .sidebar.collapsed .user-details,
+  .sidebar.collapsed .sidebar-section-title { display: none; }
+  .sidebar.collapsed .nav-link { justify-content: center; padding: 14px; }
+
+  .sidebar-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 18px; border-bottom: 1px solid var(--border);
+  }
+  .sidebar-toggle {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); font-size: 18px; padding: 4px;
+    transition: var(--trans);
+  }
+  .sidebar-toggle:hover { color: var(--blue); }
+
+  .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+  .sidebar-section-title {
+    font-size: 10px; font-weight: 600;
+    color: var(--text-dim); letter-spacing: 1.5px;
+    padding: 16px 20px 6px; text-transform: uppercase;
+  }
+  .nav-link {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 18px; margin: 2px 10px;
+    border-radius: var(--r);
+    color: var(--text-muted); font-size: 14px; font-weight: 500;
+    transition: var(--trans); cursor: pointer;
+    position: relative;
+    text-decoration: none;
+  }
+  .nav-link i { font-size: 18px; flex-shrink: 0; }
+  .nav-link:hover { background: var(--bg-card-hov); color: var(--text); }
+  .nav-link.active {
+    background: linear-gradient(135deg, rgba(79,172,254,0.18), rgba(0,242,254,0.08));
+    color: var(--blue);
+    border: 1px solid rgba(79,172,254,0.2);
+  }
+  .nav-link.active::before {
+    content: '';
+    position: absolute; left: 0; top: 20%; bottom: 20%;
+    width: 3px; border-radius: 0 3px 3px 0;
+    background: var(--blue);
+  }
+  .nav-badge {
+    margin-left: auto; background: var(--danger);
+    color: #fff; font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 20px; min-width: 20px;
+    text-align: center;
+  }
+
+  .sidebar-footer {
+    border-top: 1px solid var(--border);
+    padding: 16px 18px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .user-info { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    display: grid; place-items: center;
+    font-size: 14px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+  }
+  .user-details { overflow: hidden; }
+  .user-name {
+    display: block; font-size: 13px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .user-role { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 8px; border-radius: 20px; margin-top: 2px; }
+  .logout-btn { color: var(--text-muted); font-size: 20px; padding: 6px; border-radius: 8px; transition: var(--trans); }
+  .logout-btn:hover { color: var(--danger); background: rgba(255,71,87,0.1); }
+
+  /* ═══════════ MAIN ═══════════ */
+  .main-content {
+    margin-left: 260px; flex: 1;
+    display: flex; flex-direction: column;
+    transition: margin-left 0.3s var(--ease);
+  }
+  .main-content.expanded { margin-left: 72px; }
+
+  .topbar {
+    height: 64px;
+    background: rgba(10,16,32,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .page-title { font-size: 18px; font-weight: 700; }
+  .topbar-right { display: flex; align-items: center; gap: 14px; }
+
+  .notif-btn {
+    position: relative; background: var(--bg-card);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px 10px; cursor: pointer;
+    color: var(--text-muted); font-size: 18px;
+    transition: var(--trans);
+  }
+  .notif-btn:hover { border-color: var(--blue); color: var(--blue); }
+  .notif-badge {
+    position: absolute; top: -5px; right: -5px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--danger); color: #fff;
+    font-size: 10px; font-weight: 700;
+    display: grid; place-items: center;
+    border: 2px solid var(--bg-primary);
+  }
+
+  .content-wrapper { padding: 28px; flex: 1; }
+
+  /* ═══════════ STATS CARDS ═══════════ */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
+    gap: 18px; margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 22px;
+    display: flex; align-items: center; gap: 16px;
+    transition: var(--trans);
+  }
+  .stat-card:hover { border-color: var(--border-hov); transform: translateY(-2px); }
+  .stat-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: grid; place-items: center; font-size: 22px; flex-shrink: 0;
+  }
+  .stat-icon.blue   { background: rgba(79,172,254,0.15); color: var(--blue); }
+  .stat-icon.teal   { background: rgba(0,201,167,0.15);  color: var(--teal); }
+  .stat-icon.purple { background: rgba(168,85,247,0.15); color: var(--purple); }
+  .stat-icon.amber  { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .stat-info .stat-value {
+    font-size: 26px; font-weight: 800; letter-spacing: -1px;
+  }
+  .stat-info .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ═══════════ HERO BALANCE ═══════════ */
+  .hero-balance {
+    background: linear-gradient(135deg, rgba(79,172,254,0.15), rgba(0,242,254,0.08), rgba(0,201,167,0.05));
+    border: 1px solid rgba(79,172,254,0.25);
+    border-radius: var(--r-xl);
+    padding: 28px 32px; margin-bottom: 24px;
+    position: relative; overflow: hidden;
+  }
+  .hero-balance::before {
+    content: ''; position: absolute;
+    top: -40px; right: -40px; width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(79,172,254,0.15), transparent 70%);
+    pointer-events: none;
+  }
+  .hero-balance-label {
+    font-size: 12px; font-weight: 600; color: var(--text-muted);
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .hero-balance-value {
+    font-size: 42px; font-weight: 900; letter-spacing: -2px;
+    background: linear-gradient(135deg, #fff, var(--blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-balance-value .currency {
+    font-size: 18px; font-weight: 600;
+    -webkit-text-fill-color: var(--text-muted);
+  }
+  .hero-accounts {
+    display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px;
+  }
+  .hero-account-chip {
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 16px; font-size: 12px;
+  }
+  .hero-account-chip .label { color: var(--text-muted); }
+  .hero-account-chip .amount { font-weight: 700; margin-top: 2px; }
+  .hero-account-chip .num { font-family: 'Courier New', monospace; font-size: 10px; color: var(--blue); margin-top: 3px; }
+
+  /* ═══════════ QUICK ACTIONS ═══════════ */
+  .quick-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
+  .quick-action {
+    flex: 1; min-width: 120px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--r-lg); padding: 18px 16px;
+    text-align: center; cursor: pointer; transition: var(--trans);
+    text-decoration: none; color: var(--text-muted);
+  }
+  .quick-action:hover { border-color: var(--border-hov); color: var(--blue); background: var(--bg-card-hov); }
+  .quick-action i { font-size: 28px; display: block; margin-bottom: 8px; }
+  .quick-action span { font-size: 12px; font-weight: 600; }
+
+  /* ═══════════ ACCOUNT CARDS ═══════════ */
+  .account-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--r-lg); padding: 22px;
+    transition: var(--trans); position: relative; overflow: hidden;
+  }
+  .account-card::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--blue), var(--cyan));
+  }
+  .account-card.type-epargne::before { background: linear-gradient(90deg, var(--teal), #00e8c0); }
+  .account-card:hover { border-color: var(--border-hov); transform: translateY(-2px); }
+  .account-type-label {
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .account-balance {
+    font-size: 32px; font-weight: 800; letter-spacing: -1.5px; margin: 8px 0;
+  }
+  .account-balance .currency { font-size: 16px; font-weight: 600; color: var(--text-muted); }
+
+  /* ═══════════ FILTER BAR ═══════════ */
+  .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .filter-bar .form-control { max-width: 180px; }
+
+  /* ═══════════ MODAL ═══════════ */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    display: none; place-items: center;
+  }
+  .modal-overlay.open { display: grid; }
+  .modal {
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: var(--r-xl); padding: 28px;
+    width: min(480px, 95vw); max-height: 90vh; overflow-y: auto;
+    animation: modalIn 0.25s var(--ease);
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .modal-title { font-size: 17px; font-weight: 700; }
+  .modal-close { background: none; border: none; cursor: pointer; font-size: 20px; color: var(--text-muted); }
+  .modal-close:hover { color: var(--danger); }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+  /* ═══════════ PAGE HEADER ═══════════ */
+  .page-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 24px; gap: 16px; flex-wrap: wrap;
+  }
+  .page-header-info h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .page-header-info p  { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+  /* ═══════════ NOTIF PANEL ═══════════ */
+  .notif-panel {
+    position: fixed; top: 64px; right: 0;
+    width: 340px; max-height: calc(100vh - 64px);
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    border-radius: 0 0 0 var(--r-lg);
+    overflow-y: auto; z-index: 500;
+    transform: translateX(100%);
+    transition: transform 0.3s var(--ease);
+    box-shadow: -8px 0 32px rgba(0,0,0,0.4);
+  }
+  .notif-panel.open { transform: translateX(0); }
+  .notif-panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    font-size: 14px; font-weight: 700;
+  }
+  .notif-item { padding: 14px 20px; border-bottom: 1px solid var(--border); }
+  .notif-item:hover { background: var(--bg-card-hov); }
+  .notif-title { font-size: 13px; font-weight: 600; }
+  .notif-msg { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+  .notif-time { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+
+  /* ═══════════ LOAN CARDS ═══════════ */
+  .loan-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--r-lg); padding: 22px; margin-bottom: 16px;
+  }
+
+  /* ═══════════ RESPONSIVE ═══════════ */
+  @media (max-width: 900px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.mobile-open { transform: translateX(0); }
+    .main-content { margin-left: 0; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="app-layout">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="/customer" class="logo">
+        <div class="logo-icon"><i class="bi bi-bank2"></i></div>
+        <span class="logo-text">VaultBank</span>
+      </a>
+      <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-title">Menu</div>
+      <a href="#dashboard" class="nav-link"><i class="bi bi-grid-1x2"></i><span class="nav-label">Tableau de bord</span></a>
+      <a href="#accounts" class="nav-link"><i class="bi bi-credit-card-2-front"></i><span class="nav-label">Mes comptes</span></a>
+      <a href="#transfer" class="nav-link"><i class="bi bi-arrow-left-right"></i><span class="nav-label">Virement</span></a>
+      <a href="#history" class="nav-link"><i class="bi bi-clock-history"></i><span class="nav-label">Historique</span></a>
+      <a href="#loans" class="nav-link"><i class="bi bi-cash-coin"></i><span class="nav-label">Prêts</span></a>
+      <div class="sidebar-section-title">Compte</div>
+      <a href="#profile" class="nav-link"><i class="bi bi-person-circle"></i><span class="nav-label">Profil</span></a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar" data-user-initial>U</div>
+        <div class="user-details">
+          <span class="user-name" data-user-name>Utilisateur</span>
+          <span class="user-role badge-customer">Client</span>
+        </div>
+      </div>
+      <a href="#" onclick="logout(); return false" class="logout-btn" title="Déconnexion">
+        <i class="bi bi-box-arrow-right"></i>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="main-content" id="mainContent">
+    <header class="topbar">
+      <h1 class="page-title" id="pageTitle">Tableau de bord</h1>
+      <div class="topbar-right">
+        <button class="notif-btn" id="notifBtn" onclick="toggleNotifications()">
+          <i class="bi bi-bell"></i>
+          <span class="notif-badge" id="notifCount" style="display:none">0</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="content-wrapper">
+
+      <!-- ═══════════ PAGE: DASHBOARD ═══════════ -->
+      <div id="page-dashboard" class="page active">
+        <div id="dashboardContent">
+          <div class="loading">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- ═══════════ PAGE: ACCOUNTS ═══════════ -->
+      <div id="page-accounts" class="page">
+        <div class="page-header">
+          <div class="page-header-info">
+            <h2>Mes comptes bancaires</h2>
+            <p>Gérez et consultez vos comptes</p>
+          </div>
+        </div>
+        <div id="accountsContent">
+          <div class="loading">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- ═══════════ PAGE: TRANSFER ═══════════ -->
+      <div id="page-transfer" class="page">
+        <div class="page-header">
+          <div class="page-header-info">
+            <h2>Nouveau virement</h2>
+            <p>Transférez des fonds vers un autre compte VaultBank</p>
+          </div>
+        </div>
+        <div class="card" style="max-width:600px">
+          <form id="transferForm">
+            <div class="form-group">
+              <label class="form-label">Compte source <span style="color:var(--danger)">*</span></label>
+              <select id="from_account_id" class="form-control" required>
+                <option value="">-- Sélectionner --</option>
+              </select>
+              <div class="form-hint" id="balanceHint"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Numéro de compte destinataire <span style="color:var(--danger)">*</span></label>
+              <input type="text" id="to_account_number" class="form-control"
+                     placeholder="TN000000000000" maxlength="20" required>
+              <div id="lookupInfo"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Montant (DNT) <span style="color:var(--danger)">*</span></label>
+              <input type="number" id="amount" class="form-control"
+                     placeholder="0.00" min="1" step="0.01" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Motif / Description</label>
+              <input type="text" id="description" class="form-control"
+                     placeholder="Ex: Remboursement loyer" maxlength="120">
+            </div>
+            <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);
+                        border-radius:10px;padding:14px;margin-bottom:20px;font-size:13px;
+                        color:var(--text-muted);display:flex;gap:10px">
+              <i class="bi bi-exclamation-triangle" style="color:var(--amber);flex-shrink:0;margin-top:2px"></i>
+              <span>Les virements sont soumis à validation par un gestionnaire.</span>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px">
+              <i class="bi bi-send"></i> Soumettre le virement
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- ═══════════ PAGE: HISTORY ═══════════ -->
+      <div id="page-history" class="page">
+        <div class="page-header">
+          <div class="page-header-info">
+            <h2>Historique des transactions</h2>
+            <p id="historyCount">Chargement...</p>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <select id="filterType" class="form-control">
+            <option value="">Tous les types</option>
+            <option value="virement">Virement</option>
+            <option value="depot">Dépôt</option>
+            <option value="retrait">Retrait</option>
+          </select>
+          <select id="filterStatus" class="form-control">
+            <option value="">Tous les statuts</option>
+            <option value="pending">En attente</option>
+            <option value="completed">Complété</option>
+            <option value="rejected">Rejeté</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="loadHistory()">
+            <i class="bi bi-funnel"></i> Filtrer
+          </button>
+        </div>
+
+        <div class="table-container" id="historyContent">
+          <div class="loading">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- ═══════════ PAGE: LOANS ═══════════ -->
+      <div id="page-loans" class="page">
+        <div class="page-header">
+          <div class="page-header-info">
+            <h2>Mes demandes de prêts</h2>
+            <p>Soumettez et suivez vos demandes de crédit</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('loanModal')">
+            <i class="bi bi-plus-circle"></i> Nouvelle demande
+          </button>
+        </div>
+        <div id="loansContent">
+          <div class="loading">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- ═══════════ PAGE: PROFILE ═══════════ -->
+      <div id="page-profile" class="page">
+        <div class="page-header">
+          <div class="page-header-info">
+            <h2>Mon profil</h2>
+            <p>Gérez vos informations personnelles</p>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="bi bi-person-gear" style="color:var(--blue)"></i> Informations</div>
+            </div>
+            <form id="profileForm">
+              <div class="form-group">
+                <label class="form-label">Nom complet</label>
+                <input type="text" id="profile_full_name" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="profile_email" class="form-control" disabled style="opacity:0.5">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Téléphone</label>
+                <input type="tel" id="profile_phone" class="form-control">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Adresse</label>
+                <input type="text" id="profile_address" class="form-control">
+              </div>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Enregistrer
+              </button>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="bi bi-shield-lock" style="color:var(--teal)"></i> Mot de passe</div>
+            </div>
+            <form id="passwordForm">
+              <div class="form-group">
+                <label class="form-label">Mot de passe actuel</label>
+                <input type="password" id="current_password" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nouveau mot de passe</label>
+                <input type="password" id="new_password" class="form-control" required minlength="6">
+              </div>
+              <button type="submit" class="btn btn-success">
+                <i class="bi bi-lock-fill"></i> Mettre à jour
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ═══════════ NOTIF PANEL ═══════════ -->
+  <div class="notif-panel" id="notifPanel">
+    <div class="notif-panel-header">
+      <span><i class="bi bi-bell"></i> Notifications</span>
+      <button class="btn-icon" onclick="toggleNotifications()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div id="notifList">
+      <div class="loading">Chargement...</div>
+    </div>
+  </div>
+
+  <!-- ═══════════ MODAL: NEW LOAN ═══════════ -->
+  <div class="modal-overlay" id="loanModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title"><i class="bi bi-cash-coin" style="color:var(--blue)"></i> Nouvelle demande de prêt</div>
+        <button class="modal-close" onclick="closeModal('loanModal')"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <form id="loanForm">
+        <div class="form-group">
+          <label class="form-label">Montant (DNT) <span style="color:var(--danger)">*</span></label>
+          <input type="number" id="loan_amount" class="form-control"
+                 placeholder="Ex: 50000" min="10000" max="10000000" step="1000" required>
+          <div class="form-hint">Min: 10 000 DNT — Max: 10 000 000 DNT</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Durée (mois) <span style="color:var(--danger)">*</span></label>
+          <select id="loan_duration" class="form-control" required>
+            <option value="">-- Sélectionner --</option>
+            <option value="12">12 mois (1 an)</option>
+            <option value="24">24 mois (2 ans)</option>
+            <option value="36">36 mois (3 ans)</option>
+            <option value="60">60 mois (5 ans)</option>
+            <option value="84">84 mois (7 ans)</option>
+            <option value="120">120 mois (10 ans)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Objet du prêt</label>
+          <input type="text" id="loan_purpose" class="form-control"
+                 placeholder="Ex: Achat véhicule, construction..." maxlength="200">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('loanModal')">Annuler</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Soumettre</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<script src="/static/js/customer.js"></script>
+{% endblock %}
