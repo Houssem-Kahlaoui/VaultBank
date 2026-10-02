@@ -1,38 +1,243 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>VaultBank — Test</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body style="padding:60px;text-align:center">
-    <h1>Frontend VaultBank ✅</h1>
-    <p style="color:var(--text-muted);margin:20px 0">
-        Serveur frontend : <strong>port 3000</strong> — Backend : <strong>port 5000</strong>
+{% extends "base.html" %}
+
+{% block title %}VaultBank — Bienvenue{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Styles spécifiques à la landing ── */
+  .landing-body { overflow-x: hidden; }
+
+  .landing-nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 64px;
+    background: rgba(7,13,26,0.85); backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .nav-actions { display: flex; gap: 12px; }
+
+  .hero {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; position: relative; overflow: hidden;
+    padding: 120px 20px 80px;
+  }
+  .hero-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(79,172,254,0.13) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 50% at 80% 50%, rgba(168,85,247,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 20% 70%, rgba(0,201,167,0.07) 0%, transparent 60%),
+                var(--bg-deep);
+  }
+  .hero-grid {
+    position: absolute; inset: 0; z-index: 0; opacity: 0.03;
+    background-image: linear-gradient(rgba(79,172,254,1) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(79,172,254,1) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+  .hero-content { position: relative; z-index: 1; max-width: 840px; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(79,172,254,0.1); border: 1px solid rgba(79,172,254,0.25);
+    border-radius: 20px; padding: 6px 16px; font-size: 13px; font-weight: 500;
+    color: var(--blue); margin-bottom: 24px;
+  }
+  .hero-title {
+    font-size: clamp(36px, 6vw, 72px); font-weight: 900;
+    line-height: 1.1; letter-spacing: -2px; margin-bottom: 20px;
+  }
+  .hero-title .gradient-text {
+    background: linear-gradient(135deg, var(--blue) 0%, var(--cyan) 50%, var(--teal) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .hero-sub {
+    font-size: clamp(16px, 2vw, 20px); color: var(--text-muted);
+    line-height: 1.6; max-width: 600px; margin: 0 auto 36px;
+  }
+  .hero-actions {
+    display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+  }
+  .btn-hero {
+    padding: 14px 32px; border-radius: 14px; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: var(--trans); border: none;
+    display: inline-flex; align-items: center; gap: 8px;
+    text-decoration: none;
+  }
+  .btn-hero-primary {
+    background: linear-gradient(135deg, var(--blue), var(--cyan));
+    color: #fff; box-shadow: 0 6px 24px rgba(79,172,254,0.45);
+  }
+  .btn-hero-primary:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(79,172,254,0.6); }
+  .btn-hero-ghost {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text);
+  }
+  .btn-hero-ghost:hover { background: rgba(255,255,255,0.1); border-color: var(--blue); color: var(--blue); }
+
+  .stats-strip {
+    background: rgba(255,255,255,0.03); border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border); padding: 28px 64px;
+    display: flex; justify-content: center; gap: 80px; flex-wrap: wrap;
+  }
+  .strip-stat { text-align: center; }
+  .strip-stat .value { font-size: 32px; font-weight: 900; letter-spacing: -1px; color: var(--blue); }
+  .strip-stat .label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+  .section { padding: 100px 64px; max-width: 1200px; margin: 0 auto; }
+  .section-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(0,201,167,0.1); border: 1px solid rgba(0,201,167,0.2);
+    border-radius: 20px; padding: 5px 14px; font-size: 12px; font-weight: 600;
+    color: var(--teal); letter-spacing: 0.5px; margin-bottom: 16px;
+  }
+  .section-title {
+    font-size: clamp(28px, 4vw, 46px); font-weight: 900;
+    letter-spacing: -1.5px; margin-bottom: 12px;
+  }
+  .section-desc { font-size: 17px; color: var(--text-muted); max-width: 560px; }
+  .features-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr));
+    gap: 20px; margin-top: 48px;
+  }
+  .feature-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--r-xl); padding: 28px; transition: var(--trans);
+  }
+  .feature-card:hover { border-color: var(--border-hov); transform: translateY(-4px); }
+  .feature-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: grid; place-items: center; font-size: 22px; margin-bottom: 18px;
+  }
+  .feature-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+  .feature-desc { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+
+  .cta-section {
+    text-align: center; padding: 80px 64px;
+    background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(79,172,254,0.08), transparent);
+  }
+  .cta-card {
+    max-width: 680px; margin: 0 auto;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--r-xl); padding: 52px 40px;
+  }
+  .landing-footer {
+    text-align: center; padding: 28px; border-top: 1px solid var(--border);
+    font-size: 13px; color: var(--text-dim);
+  }
+
+  @media (max-width: 900px) {
+    .landing-nav { padding: 14px 24px; }
+    .section { padding: 60px 24px; }
+    .stats-strip { gap: 40px; padding: 24px; }
+    .cta-section { padding: 60px 24px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Navigation ── -->
+<nav class="landing-nav">
+  <a href="/" class="logo" style="display:flex;align-items:center;gap:10px;text-decoration:none">
+    <div class="logo-icon"><i class="bi bi-bank2"></i></div>
+    <span class="logo-text">VaultBank</span>
+  </a>
+  <div class="nav-actions">
+    <a href="/login" class="btn-hero btn-hero-ghost" style="padding:10px 20px;font-size:13px">Se connecter</a>
+    <a href="/register" class="btn-hero btn-hero-primary" style="padding:10px 20px;font-size:13px">Créer un compte</a>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge"><i class="bi bi-shield-check"></i> Banque 100% sécurisée</div>
+    <h1 class="hero-title">
+      La banque digitale<br>
+      <span class="gradient-text">pensée pour vous</span>
+    </h1>
+    <p class="hero-sub">
+      Gérez vos comptes, effectuez des virements et suivez vos finances en temps réel — depuis n'importe où.
     </p>
+    <div class="hero-actions">
+      <a href="/register" class="btn-hero btn-hero-primary">
+        <i class="bi bi-rocket-takeoff"></i> Ouvrir un compte gratuit
+      </a>
+      <a href="/login" class="btn-hero btn-hero-ghost">
+        <i class="bi bi-box-arrow-in-right"></i> Se connecter
+      </a>
+    </div>
+  </div>
+</section>
 
-    <button class="btn btn-primary" onclick="testApi()" style="margin-bottom:20px">
-        Tester la connexion à l'API
-    </button>
+<!-- ── Stats strip ── -->
+<div class="stats-strip">
+  <div class="strip-stat"><div class="value">+15K</div><div class="label">Clients actifs</div></div>
+  <div class="strip-stat"><div class="value">99.9%</div><div class="label">Disponibilité</div></div>
+  <div class="strip-stat"><div class="value">256-bit</div><div class="label">Chiffrement SSL</div></div>
+  <div class="strip-stat"><div class="value">24/7</div><div class="label">Support client</div></div>
+</div>
 
-    <pre id="result" style="background:rgba(255,255,255,0.05);padding:20px;border-radius:12px;
-        text-align:left;max-width:500px;margin:0 auto;font-size:13px;color:var(--teal)"></pre>
+<!-- ── Features ── -->
+<div class="section">
+  <div class="section-tag"><i class="bi bi-stars"></i> Fonctionnalités</div>
+  <h2 class="section-title">Tout ce dont vous<br>avez besoin</h2>
+  <p class="section-desc">Une plateforme complète pour gérer votre argent avec facilité et sécurité.</p>
 
-    <script src="/static/js/api.js"></script>
-    <script src="/static/js/main.js"></script>
-    <script>
-        async function testApi() {
-            const result = document.getElementById('result');
-            result.textContent = 'Test en cours...';
-            try {
-                const data = await api.get('/health');
-                result.textContent = '✅ ' + JSON.stringify(data, null, 2);
-                showToast('API connectée avec succès', 'success');
-            } catch (err) {
-                result.textContent = '❌ ' + err.message;
-                showToast('Erreur : ' + err.message, 'danger');
-            }
-        }
-    </script>
-</body>
-</html>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(79,172,254,0.15);color:var(--blue)"><i class="bi bi-arrow-left-right"></i></div>
+      <div class="feature-title">Virements instantanés</div>
+      <div class="feature-desc">Transférez de l'argent vers n'importe quel compte VaultBank en quelques secondes.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(0,201,167,0.15);color:var(--teal)"><i class="bi bi-clock-history"></i></div>
+      <div class="feature-title">Historique complet</div>
+      <div class="feature-desc">Consultez toutes vos transactions avec filtres avancés par date, type et statut.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(168,85,247,0.15);color:var(--purple)"><i class="bi bi-cash-coin"></i></div>
+      <div class="feature-title">Demandes de prêt</div>
+      <div class="feature-desc">Soumettez votre demande de crédit en ligne et suivez son avancement.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(245,158,11,0.15);color:var(--amber)"><i class="bi bi-shield-lock"></i></div>
+      <div class="feature-title">Sécurité maximale</div>
+      <div class="feature-desc">Authentification JWT, chiffrement des données et gestion des sessions.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(0,242,254,0.15);color:var(--cyan)"><i class="bi bi-bell"></i></div>
+      <div class="feature-title">Notifications temps réel</div>
+      <div class="feature-desc">Restez informé de chaque mouvement sur vos comptes avec des alertes instantanées.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(255,71,87,0.15);color:var(--danger)"><i class="bi bi-phone"></i></div>
+      <div class="feature-title">100% responsive</div>
+      <div class="feature-desc">Accédez à votre banque depuis n'importe quel appareil — mobile, tablette ou desktop.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CTA ── -->
+<div class="cta-section">
+  <div class="cta-card">
+    <h2 style="font-size:36px;font-weight:900;letter-spacing:-1px;margin-bottom:12px">
+      Prêt à rejoindre<br><span class="gradient-text">VaultBank ?</span>
+    </h2>
+    <p style="font-size:16px;color:var(--text-muted);margin-bottom:28px">
+      Rejoignez des milliers de clients qui nous font déjà confiance.
+    </p>
+    <a href="/register" class="btn-hero btn-hero-primary" style="display:inline-flex">
+      <i class="bi bi-person-plus"></i> Ouvrir mon compte gratuit
+    </a>
+  </div>
+</div>
+
+<!-- ── Footer ── -->
+<footer class="landing-footer">
+  <p>&copy; 2025 VaultBank — Tous droits réservés · <a href="/login" style="color:var(--blue)">Connexion</a></p>
+</footer>
+
+{% endblock %}
