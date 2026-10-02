@@ -31,10 +31,10 @@ cd frontend
 python app.py
 → Interface : http://localhost:3000
 
-Comptes de test
-Rôle	Email	Mot de passe
-Admin	admin@vaultbank.tn	Admin123
+Comptes de test :
+Rôle	        Email	                    Mot de passe
+Admin	        admin@vaultbank.tn	        Admin123
 Gestionnaire	gestionnaire@vaultbank.tn	Gest123
-Client	youssef@vaultbank.tn	Client123
+Client	        youssef@vaultbank.tn	    Client123
 Auteur
 Houssem kahlaoui
