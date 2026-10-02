@@ -33,4 +33,4 @@ python app.py
 
 ```
 ## Diagramme de classes
-https://docs/Class-Diagram.png
+![Class Diagram](docs/Class-Diagram.png)
