@@ -3,10 +3,10 @@
  */
 
 let currentUser = null;
-let allUsers       = [];
-let allAccounts    = [];
+let allUsers        = [];
+let allAccounts     = [];
 let allTransactions = [];
-let allLogs        = [];
+let allLogs         = [];
 let currentCreditAccountId = null;
 
 // ═══════════════════════════════════════════════════════════════
@@ -21,8 +21,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initSidebar();
     initRouter('dashboard', onPageChange);
 
-    document.getElementById('createUserForm').addEventListener('submit', handleCreateUser);
-    document.getElementById('creditForm').addEventListener('submit', handleCredit);
+    const createUserForm = document.getElementById('createUserForm');
+    if (createUserForm) createUserForm.addEventListener('submit', handleCreateUser);
+
+    const creditForm = document.getElementById('creditForm');
+    if (creditForm) creditForm.addEventListener('submit', handleCredit);
 });
 
 
@@ -63,122 +66,42 @@ async function loadDashboard() {
 
         c.innerHTML = `
             <div style="margin-bottom:28px">
-                <h2 style="font-size:24px;font-weight:800;letter-spacing:-0.5px">
-                    Administration système
-                </h2>
-                <p style="color:var(--text-muted);font-size:13px;margin-top:4px">
-                    Vue globale de la plateforme VaultBank
-                </p>
+                <h2 style="font-size:24px;font-weight:800;letter-spacing:-0.5px">Administration système</h2>
+                <p style="color:var(--text-muted);font-size:13px;margin-top:4px">Vue globale de la plateforme VaultBank</p>
             </div>
-
             <div class="stats-grid">
                 <div class="stat-card" onclick="window.location.hash='#users'">
                     <div class="stat-icon blue"><i class="bi bi-people"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-value">${s.total_customers}</div>
-                        <div class="stat-label">Clients</div>
-                    </div>
+                    <div class="stat-info"><div class="stat-value">${s.total_customers}</div><div class="stat-label">Clients</div></div>
                 </div>
                 <div class="stat-card" onclick="window.location.hash='#users'">
                     <div class="stat-icon purple"><i class="bi bi-person-badge"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-value">${s.total_gestionnaires}</div>
-                        <div class="stat-label">Gestionnaires</div>
-                    </div>
+                    <div class="stat-info"><div class="stat-value">${s.total_gestionnaires}</div><div class="stat-label">Gestionnaires</div></div>
                 </div>
                 <div class="stat-card" onclick="window.location.hash='#users'">
                     <div class="stat-icon amber"><i class="bi bi-shield-lock"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-value">${s.total_admins}</div>
-                        <div class="stat-label">Admins</div>
-                    </div>
+                    <div class="stat-info"><div class="stat-value">${s.total_admins}</div><div class="stat-label">Admins</div></div>
                 </div>
                 <div class="stat-card" onclick="window.location.hash='#accounts'">
                     <div class="stat-icon teal"><i class="bi bi-wallet2"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-value">${s.total_accounts}</div>
-                        <div class="stat-label">Comptes bancaires</div>
-                    </div>
+                    <div class="stat-info"><div class="stat-value">${s.total_accounts}</div><div class="stat-label">Comptes</div></div>
                 </div>
                 <div class="stat-card" onclick="window.location.hash='#transactions'">
                     <div class="stat-icon amber"><i class="bi bi-hourglass-split"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-value">${s.pending_transactions}</div>
-                        <div class="stat-label">Transactions en attente</div>
-                    </div>
+                    <div class="stat-info"><div class="stat-value">${s.pending_transactions}</div><div class="stat-label">En attente</div></div>
                 </div>
                 <div class="stat-card" onclick="window.location.hash='#transactions'">
                     <div class="stat-icon cyan"><i class="bi bi-check-circle"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-value">${s.completed_transactions}</div>
-                        <div class="stat-label">Transactions complétées</div>
-                    </div>
+                    <div class="stat-info"><div class="stat-value">${s.completed_transactions}</div><div class="stat-label">Complétées</div></div>
                 </div>
                 <div class="stat-card" onclick="window.location.hash='#accounts'">
                     <div class="stat-icon teal"><i class="bi bi-person-check"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-value">${s.active_accounts}</div>
-                        <div class="stat-label">Comptes actifs</div>
-                    </div>
+                    <div class="stat-info"><div class="stat-value">${s.active_accounts}</div><div class="stat-label">Actifs</div></div>
                 </div>
                 <div class="stat-card" onclick="window.location.hash='#accounts'">
                     <div class="stat-icon danger"><i class="bi bi-snow2"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-value">${s.frozen_accounts}</div>
-                        <div class="stat-label">Comptes gelés</div>
-                    </div>
+                    <div class="stat-info"><div class="stat-value">${s.frozen_accounts}</div><div class="stat-label">Gelés</div></div>
                 </div>
-            </div>
-
-            <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-                <a href="#users" style="text-decoration:none;color:inherit">
-                    <div class="card" style="display:flex;gap:14px;align-items:center;cursor:pointer">
-                        <div style="width:48px;height:48px;border-radius:12px;background:rgba(79,172,254,0.15);color:var(--blue);display:grid;place-items:center;font-size:20px;flex-shrink:0">
-                            <i class="bi bi-people-fill"></i>
-                        </div>
-                        <div>
-                            <div style="font-weight:700">Utilisateurs</div>
-                            <div style="font-size:12px;color:var(--text-muted)">Créer, modifier, désactiver</div>
-                        </div>
-                        <i class="bi bi-arrow-right" style="margin-left:auto;color:var(--text-muted)"></i>
-                    </div>
-                </a>
-                <a href="#accounts" style="text-decoration:none;color:inherit">
-                    <div class="card" style="display:flex;gap:14px;align-items:center;cursor:pointer">
-                        <div style="width:48px;height:48px;border-radius:12px;background:rgba(0,201,167,0.15);color:var(--teal);display:grid;place-items:center;font-size:20px;flex-shrink:0">
-                            <i class="bi bi-wallet2"></i>
-                        </div>
-                        <div>
-                            <div style="font-weight:700">Comptes</div>
-                            <div style="font-size:12px;color:var(--text-muted)">Créditer, geler, gérer</div>
-                        </div>
-                        <i class="bi bi-arrow-right" style="margin-left:auto;color:var(--text-muted)"></i>
-                    </div>
-                </a>
-                <a href="#transactions" style="text-decoration:none;color:inherit">
-                    <div class="card" style="display:flex;gap:14px;align-items:center;cursor:pointer">
-                        <div style="width:48px;height:48px;border-radius:12px;background:rgba(168,85,247,0.15);color:var(--purple);display:grid;place-items:center;font-size:20px;flex-shrink:0">
-                            <i class="bi bi-arrow-left-right"></i>
-                        </div>
-                        <div>
-                            <div style="font-weight:700">Transactions</div>
-                            <div style="font-size:12px;color:var(--text-muted)">Toutes les opérations</div>
-                        </div>
-                        <i class="bi bi-arrow-right" style="margin-left:auto;color:var(--text-muted)"></i>
-                    </div>
-                </a>
-                <a href="#logs" style="text-decoration:none;color:inherit">
-                    <div class="card" style="display:flex;gap:14px;align-items:center;cursor:pointer">
-                        <div style="width:48px;height:48px;border-radius:12px;background:rgba(245,158,11,0.15);color:var(--amber);display:grid;place-items:center;font-size:20px;flex-shrink:0">
-                            <i class="bi bi-journal-text"></i>
-                        </div>
-                        <div>
-                            <div style="font-weight:700">Journaux d'audit</div>
-                            <div style="font-size:12px;color:var(--text-muted)">Traçabilité des actions</div>
-                        </div>
-                        <i class="bi bi-arrow-right" style="margin-left:auto;color:var(--text-muted)"></i>
-                    </div>
-                </a>
             </div>
         `;
     } catch (err) {
@@ -216,49 +139,28 @@ function renderUsers(users) {
     c.innerHTML = `
         <table>
             <thead>
-                <tr>
-                    <th>#</th><th>Utilisateur</th><th>Email</th><th>Rôle</th>
-                    <th>Téléphone</th><th>Statut</th><th>Actions</th>
-                </tr>
+                <tr><th>#</th><th>Utilisateur</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Actions</th></tr>
             </thead>
             <tbody>
                 ${users.map(u => `
                     <tr class="user-row">
                         <td class="td-muted">${u.id}</td>
-                        <td>
-                            <div style="display:flex;align-items:center;gap:10px">
-                                <div style="width:32px;height:32px;border-radius:50%;
-                                    background:linear-gradient(135deg,
-                                        ${u.role === 'admin' ? 'var(--amber)' : u.role === 'gestionnaire' ? 'var(--purple)' : 'var(--blue)'},
-                                        ${u.role === 'admin' ? '#fbbf24' : u.role === 'gestionnaire' ? 'var(--blue)' : 'var(--cyan)'});
-                                    display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">
-                                    ${u.full_name.charAt(0).toUpperCase()}
-                                </div>
-                                <span style="font-weight:600">${u.full_name}</span>
-                            </div>
-                        </td>
+                        <td><div style="font-weight:600">${u.full_name}</div></td>
                         <td class="td-muted">${u.email}</td>
                         <td><span class="badge badge-${u.role}">${u.role}</span></td>
-                        <td class="td-muted">${u.phone || '—'}</td>
+                        <td><span class="badge badge-${u.is_active ? 'active' : 'closed'}">${u.is_active ? 'Actif' : 'Inactif'}</span></td>
                         <td>
-                            <span class="badge badge-${u.is_active ? 'active' : 'closed'}">
-                                ${u.is_active ? 'Actif' : 'Inactif'}
-                            </span>
-                        </td>
-                        <td>
-                            <div style="display:flex;gap:6px">
-                                ${u.id !== currentUser.id ? `
-                                    <button class="btn-icon btn-sm" title="${u.is_active ? 'Désactiver' : 'Activer'}"
-                                            onclick="toggleUser(${u.id}, ${u.is_active})">
-                                        <i class="bi bi-person-${u.is_active ? 'dash' : 'check'}"
-                                           style="color:${u.is_active ? 'var(--amber)' : 'var(--teal)'}"></i>
-                                    </button>
-                                    <button class="btn-icon btn-sm" title="Supprimer"
-                                            onclick="deleteUser(${u.id}, '${u.full_name.replace(/'/g, "\\'")}')">
-                                        <i class="bi bi-trash3" style="color:var(--danger)"></i>
-                                    </button>
-                                ` : '<span class="td-muted" style="font-size:11px">Vous</span>'}
-                            </div>
+                            ${u.id !== currentUser.id ? `
+                                <button class="btn-icon btn-sm" title="${u.is_active ? 'Désactiver' : 'Activer'}"
+                                        onclick="toggleUser(${u.id}, ${u.is_active})">
+                                    <i class="bi bi-person-${u.is_active ? 'dash' : 'check'}"
+                                       style="color:${u.is_active ? 'var(--amber)' : 'var(--teal)'}"></i>
+                                </button>
+                                <button class="btn-icon btn-sm" title="Supprimer"
+                                        onclick="deleteUser(${u.id}, '${u.full_name.replace(/'/g, "\\'")}')">
+                                    <i class="bi bi-trash3" style="color:var(--danger)"></i>
+                                </button>
+                            ` : '<span class="td-muted" style="font-size:11px">Vous</span>'}
                         </td>
                     </tr>
                 `).join('')}
@@ -270,12 +172,11 @@ function renderUsers(users) {
 
 function filterUsers(q) {
     q = q.toLowerCase();
-    const filtered = allUsers.filter(u =>
+    renderUsers(allUsers.filter(u =>
         u.full_name.toLowerCase().includes(q) ||
         u.email.toLowerCase().includes(q) ||
         u.role.toLowerCase().includes(q)
-    );
-    renderUsers(filtered);
+    ));
 }
 
 
@@ -307,7 +208,16 @@ async function handleCreateUser(e) {
 
 async function toggleUser(id, isActive) {
     const action = isActive ? 'désactiver' : 'activer';
-    if (!confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} cet utilisateur ?`)) return;
+    const ok = await askConfirm(
+        `Voulez-vous ${action} cet utilisateur ?`,
+        {
+            title: isActive ? 'Désactiver l\'utilisateur' : 'Activer l\'utilisateur',
+            confirmText: isActive ? 'Désactiver' : 'Activer',
+            danger: isActive,
+        }
+    );
+    if (!ok) return;
+
     try {
         await api.put(`/admin/users/${id}/toggle`);
         showToast(`Utilisateur ${action === 'désactiver' ? 'désactivé' : 'activé'}.`, 'success');
@@ -319,7 +229,12 @@ async function toggleUser(id, isActive) {
 
 
 async function deleteUser(id, name) {
-    if (!confirm(`Supprimer définitivement ${name} ? Cette action est irréversible.`)) return;
+    const ok = await askConfirm(
+        `Supprimer définitivement ${name} ? Cette action est irréversible.`,
+        { title: 'Supprimer l\'utilisateur', confirmText: 'Supprimer', danger: true }
+    );
+    if (!ok) return;
+
     try {
         await api.delete(`/admin/users/${id}`);
         showToast('Utilisateur supprimé.', 'success');
@@ -359,10 +274,7 @@ function renderAccounts(accounts) {
     c.innerHTML = `
         <table>
             <thead>
-                <tr>
-                    <th>#</th><th>Titulaire</th><th>N° Compte</th><th>Type</th>
-                    <th>Solde</th><th>Statut</th><th>Actions</th>
-                </tr>
+                <tr><th>#</th><th>Titulaire</th><th>N° Compte</th><th>Type</th><th>Solde</th><th>Statut</th><th>Actions</th></tr>
             </thead>
             <tbody>
                 ${accounts.map(a => `
@@ -404,45 +316,79 @@ function renderAccounts(accounts) {
 
 function filterAccounts(q) {
     q = q.toLowerCase();
-    const filtered = allAccounts.filter(a =>
+    renderAccounts(allAccounts.filter(a =>
         (a.owner_name || '').toLowerCase().includes(q) ||
         (a.owner_email || '').toLowerCase().includes(q) ||
         (a.account_number || '').toLowerCase().includes(q)
-    );
-    renderAccounts(filtered);
+    ));
 }
 
 
 function openCreditModal(id, accNum, balance) {
     currentCreditAccountId = id;
-    document.getElementById('creditModalInfo').innerHTML =
-        `Compte <span class="acc-number">${accNum}</span><br>
-         Solde actuel : <strong>${formatDNT(balance)}</strong>`;
-    document.getElementById('creditForm').reset();
-    document.getElementById('credit_description').value = 'Dépôt administratif';
+
+    const info = document.getElementById('creditModalInfo');
+    if (info) {
+        info.innerHTML = `Compte <span class="acc-number">${accNum}</span><br>
+                          Solde actuel : <strong>${formatDNT(balance)}</strong>`;
+    }
+
+    const form = document.getElementById('creditForm');
+    if (form) form.reset();
+
+    const desc = document.getElementById('credit_description');
+    if (desc) desc.value = 'Dépôt administratif';
+
     openModal('creditModal');
 }
 
 
 async function handleCredit(e) {
     e.preventDefault();
+
+    const amountInput = document.getElementById('credit_amount');
+    const descInput   = document.getElementById('credit_description');
+
+    if (!amountInput || !amountInput.value) {
+        showToast('Veuillez saisir un montant.', 'danger');
+        return;
+    }
+
+    const btn = e.target.querySelector('button[type="submit"]');
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Crédit en cours...';
+
     try {
         await api.post(`/admin/accounts/${currentCreditAccountId}/credit`, {
-            amount:      parseFloat(document.getElementById('credit_amount').value),
-            description: document.getElementById('credit_description').value.trim(),
+            amount:      parseFloat(amountInput.value),
+            description: descInput ? descInput.value.trim() : 'Dépôt administratif',
         });
+
         showToast('Compte crédité avec succès !', 'success');
         closeModal('creditModal');
         loadAccounts();
     } catch (err) {
-        showToast(err.message, 'danger');
+        showToast(err.message || 'Erreur inconnue', 'danger');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = original;
     }
 }
 
 
 async function toggleAccount(id, currentStatus) {
     const action = currentStatus === 'active' ? 'geler' : 'activer';
-    if (!confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} ce compte ?`)) return;
+    const ok = await askConfirm(
+        `Voulez-vous ${action} ce compte ?`,
+        {
+            title: currentStatus === 'active' ? 'Geler le compte' : 'Activer le compte',
+            confirmText: currentStatus === 'active' ? 'Geler' : 'Activer',
+            danger: currentStatus === 'active',
+        }
+    );
+    if (!ok) return;
+
     try {
         await api.post(`/admin/accounts/${id}/freeze`);
         showToast(`Compte ${currentStatus === 'active' ? 'gelé' : 'activé'}.`, 'success');
@@ -464,7 +410,6 @@ async function loadTransactions(status = '') {
     try {
         const params = status ? `?status=${status}` : '';
         const data = await api.get(`/admin/transactions${params}`);
-        allTransactions = data.transactions;
         document.getElementById('transactionsCount').textContent =
             `${data.count} transaction(s)${status ? ` — ${status}` : ''}`;
 
@@ -476,10 +421,7 @@ async function loadTransactions(status = '') {
         c.innerHTML = `
             <table>
                 <thead>
-                    <tr>
-                        <th>#</th><th>Type</th><th>De</th><th>Vers</th>
-                        <th>Montant</th><th>Statut</th><th>Date</th>
-                    </tr>
+                    <tr><th>#</th><th>Type</th><th>De</th><th>Vers</th><th>Montant</th><th>Statut</th><th>Date</th></tr>
                 </thead>
                 <tbody>
                     ${data.transactions.map(t => `
@@ -559,22 +501,13 @@ function renderLogs(logs) {
                     <tr class="log-row">
                         <td class="td-muted">${l.id}</td>
                         <td>
-                            <span class="action-badge" style="color:${ACTION_COLORS[l.action] || 'var(--text-muted)'};
-                                border-color:${ACTION_COLORS[l.action] || 'var(--border)'}55">
+                            <span class="action-badge" style="color:${ACTION_COLORS[l.action] || 'var(--text-muted)'}">
                                 ${l.action.replace(/_/g, ' ')}
                             </span>
                         </td>
-                        <td>
-                            ${l.user_id ? `<span style="font-weight:600">User #${l.user_id}</span>` : '<span class="td-muted">Système</span>'}
-                        </td>
-                        <td class="td-muted" style="font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                            ${l.details || '—'}
-                        </td>
-                        <td>
-                            <code style="font-size:11px;color:var(--text-muted);background:rgba(255,255,255,0.04);padding:2px 8px;border-radius:6px">
-                                ${l.ip_address || '—'}
-                            </code>
-                        </td>
+                        <td>${l.user_id ? `<span style="font-weight:600">User #${l.user_id}</span>` : '<span class="td-muted">Système</span>'}</td>
+                        <td class="td-muted" style="font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.details || '—'}</td>
+                        <td><code style="font-size:11px;color:var(--text-muted);background:rgba(255,255,255,0.04);padding:2px 8px;border-radius:6px">${l.ip_address || '—'}</code></td>
                         <td class="td-muted" style="font-size:12px;white-space:nowrap">${formatDate(l.created_at)}</td>
                     </tr>
                 `).join('')}
@@ -586,10 +519,9 @@ function renderLogs(logs) {
 
 function filterLogs(q) {
     q = q.toLowerCase();
-    const filtered = allLogs.filter(l =>
+    renderLogs(allLogs.filter(l =>
         (l.action || '').toLowerCase().includes(q) ||
         (l.details || '').toLowerCase().includes(q) ||
         (l.ip_address || '').toLowerCase().includes(q)
-    );
-    renderLogs(filtered);
+    ));
 }

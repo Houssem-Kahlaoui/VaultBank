@@ -1,3 +1,8 @@
+/**
+ * main.js — Utilitaires partagés du frontend.
+ */
+
+// ═══════════════ TOASTS ═══════════════
 
 function showToast(message, type = 'info') {
     let container = document.getElementById('toast-container');
@@ -27,6 +32,7 @@ function showToast(message, type = 'info') {
 }
 
 
+// ═══════════════ FORMATAGE ═══════════════
 
 function formatDNT(amount) {
     return new Intl.NumberFormat('fr-TN', {
@@ -53,17 +59,12 @@ function formatDateShort(isoString) {
 }
 
 
+// ═══════════════ ROUTER ═══════════════
 
-/**
- 
- * @param {string} defaultPage - Page par défaut si aucun hash.
- * @param {Function} onPageChange - Callback quand la page change (recharge les données).
- */
 function initRouter(defaultPage, onPageChange) {
     function navigate() {
         const hash = window.location.hash.replace('#', '') || defaultPage;
 
-        // Cacher toutes les pages
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
 
         const target = document.getElementById('page-' + hash);
@@ -78,10 +79,11 @@ function initRouter(defaultPage, onPageChange) {
     }
 
     window.addEventListener('hashchange', navigate);
-    navigate();   // Appel initial
+    navigate();
 }
 
 
+// ═══════════════ SIDEBAR ═══════════════
 
 function initSidebar() {
     const toggle  = document.getElementById('sidebarToggle');
@@ -97,6 +99,7 @@ function initSidebar() {
 }
 
 
+// ═══════════════ NOTIFICATIONS ═══════════════
 
 function toggleNotifications() {
     const panel = document.getElementById('notifPanel');
@@ -104,17 +107,103 @@ function toggleNotifications() {
 }
 
 
+// ═══════════════ USER INFO ═══════════════
 
 function initUserInfo() {
     const user = getUser();
     if (!user) return;
 
-    const nameEls = document.querySelectorAll('[data-user-name]');
-    nameEls.forEach(el => el.textContent = user.full_name);
+    document.querySelectorAll('[data-user-name]').forEach(el => el.textContent = user.full_name);
+    document.querySelectorAll('[data-user-role]').forEach(el =>
+        el.textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1));
+    document.querySelectorAll('[data-user-initial]').forEach(el =>
+        el.textContent = user.full_name.charAt(0).toUpperCase());
+}
 
-    const roleEls = document.querySelectorAll('[data-user-role]');
-    roleEls.forEach(el => el.textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1));
 
-    const initialEls = document.querySelectorAll('[data-user-initial]');
-    initialEls.forEach(el => el.textContent = user.full_name.charAt(0).toUpperCase());
+// ═══════════════ MODAL HELPERS ═══════════════
+
+function openModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.classList.add('open');
+}
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.classList.remove('open');
+}
+
+// Fermer quand on clique sur l'overlay (fond sombre)
+document.addEventListener('click', (e) => {
+    if (e.target.classList && e.target.classList.contains('modal-overlay')) {
+        e.target.classList.remove('open');
+    }
+});
+
+// Fermer avec la touche Échap
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.open')
+            .forEach(m => m.classList.remove('open'));
+    }
+});
+
+
+// ═══════════════ CONFIRM MODAL ═══════════════
+
+let _confirmResolve = null;
+
+/**
+ * Affiche un modal de confirmation et retourne une Promise<boolean>.
+ * Usage:
+ *   if (await askConfirm('Supprimer cet utilisateur ?')) { ... }
+ */
+function askConfirm(message, options = {}) {
+    return new Promise((resolve) => {
+        _confirmResolve = resolve;
+
+        document.getElementById('confirmTitle').textContent   = options.title || 'Confirmation';
+        document.getElementById('confirmMessage').textContent = message;
+
+        const btn = document.getElementById('confirmYesBtn');
+        btn.textContent = options.confirmText || 'Confirmer';
+
+        const isDanger = options.danger !== false;  // danger par défaut
+
+        // Style du bouton principal
+        btn.className = 'btn ' + (isDanger ? 'btn-danger' : 'btn-success');
+        btn.style.minWidth = '100px';
+        btn.style.justifyContent = 'center';
+
+        // Style de l'icône du haut
+        const iconWrap = document.getElementById('confirmIconWrap');
+        const icon     = document.getElementById('confirmIcon');
+        if (isDanger) {
+            iconWrap.style.background = 'rgba(255,71,87,0.15)';
+            iconWrap.style.color = 'var(--danger)';
+            icon.className = 'bi bi-exclamation-triangle';
+        } else {
+            iconWrap.style.background = 'rgba(0,201,167,0.15)';
+            iconWrap.style.color = 'var(--teal)';
+            icon.className = 'bi bi-check-circle';
+        }
+
+        openModal('confirmModal');
+    });
+}
+
+function confirmYes() {
+    closeModal('confirmModal');
+    if (_confirmResolve) {
+        _confirmResolve(true);
+        _confirmResolve = null;
+    }
+}
+
+function confirmNo() {
+    closeModal('confirmModal');
+    if (_confirmResolve) {
+        _confirmResolve(false);
+        _confirmResolve = null;
+    }
 }

@@ -17,6 +17,32 @@
   <!-- Toast container global -->
   <div id="toast-container"></div>
 
+  <!-- ═══════════════ SHARED CONFIRM MODAL ═══════════════ -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal" style="max-width:420px;text-align:center">
+      <div id="confirmIconWrap" style="width:64px;height:64px;border-radius:50%;
+                  background:rgba(255,71,87,0.15);color:var(--danger);
+                  display:grid;place-items:center;font-size:28px;
+                  margin:0 auto 16px">
+        <i class="bi bi-exclamation-triangle" id="confirmIcon"></i>
+      </div>
+      <div style="font-size:17px;font-weight:700;margin-bottom:8px" id="confirmTitle">
+        Confirmation
+      </div>
+      <p style="font-size:14px;color:var(--text-muted);line-height:1.5;margin-bottom:24px" id="confirmMessage">
+        Êtes-vous sûr ?
+      </p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="btn btn-ghost" onclick="confirmNo()" style="min-width:100px;justify-content:center">
+          Annuler
+        </button>
+        <button class="btn btn-danger" id="confirmYesBtn" onclick="confirmYes()" style="min-width:100px;justify-content:center">
+          Confirmer
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Core JS -->
   <script src="/static/js/api.js"></script>
   <script src="/static/js/main.js"></script>

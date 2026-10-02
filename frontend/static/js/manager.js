@@ -4,6 +4,7 @@
 
 let currentUser = null;
 let allLoans    = [];
+let allAccounts = [];
 let currentRejectTransferId = null;
 let currentRejectLoanId     = null;
 
@@ -19,9 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initSidebar();
     initRouter('dashboard', onPageChange);
 
-    // Bind modal forms
-    document.getElementById('rejectForm').addEventListener('submit', handleRejectTransfer);
-    document.getElementById('rejectLoanForm').addEventListener('submit', handleRejectLoan);
+    const rejectForm = document.getElementById('rejectForm');
+    if (rejectForm) rejectForm.addEventListener('submit', handleRejectTransfer);
+
+    const rejectLoanForm = document.getElementById('rejectLoanForm');
+    if (rejectLoanForm) rejectLoanForm.addEventListener('submit', handleRejectLoan);
 });
 
 
@@ -58,7 +61,6 @@ async function loadDashboard() {
         const data = await api.get('/manager/dashboard');
         const { stats } = data;
 
-        // Update sidebar badges
         updateBadge('pendingTransfersBadge', stats.pending_transfers_count);
         updateBadge('pendingLoansBadge',     stats.pending_loans_count);
 
@@ -87,25 +89,11 @@ async function loadDashboard() {
                         <div class="stat-label">Prêts en attente</div>
                     </div>
                 </div>
-                <div class="stat-card" onclick="window.location.hash='#transfers'">
-                    <div class="stat-icon blue"><i class="bi bi-arrow-left-right"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-value">${stats.pending_transfers_count}</div>
-                        <div class="stat-label">À traiter</div>
-                    </div>
-                </div>
-                <div class="stat-card" onclick="window.location.hash='#accounts'">
-                    <div class="stat-icon teal"><i class="bi bi-wallet2"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-value">→</div>
-                        <div class="stat-label">Comptes clients</div>
-                    </div>
-                </div>
             </div>
 
             <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
                 <a href="#transfers" style="text-decoration:none;color:inherit">
-                    <div class="card" style="display:flex;gap:16px;align-items:center;cursor:pointer;border-color:${stats.pending_transfers_count > 0 ? 'rgba(245,158,11,0.3)' : 'var(--border)'}">
+                    <div class="card" style="display:flex;gap:16px;align-items:center;cursor:pointer">
                         <div style="width:52px;height:52px;border-radius:14px;background:rgba(245,158,11,0.15);color:var(--amber);display:grid;place-items:center;font-size:24px;flex-shrink:0">
                             <i class="bi bi-hourglass-split"></i>
                         </div>
@@ -119,7 +107,7 @@ async function loadDashboard() {
                     </div>
                 </a>
                 <a href="#loans" style="text-decoration:none;color:inherit">
-                    <div class="card" style="display:flex;gap:16px;align-items:center;cursor:pointer;border-color:${stats.pending_loans_count > 0 ? 'rgba(168,85,247,0.3)' : 'var(--border)'}">
+                    <div class="card" style="display:flex;gap:16px;align-items:center;cursor:pointer">
                         <div style="width:52px;height:52px;border-radius:14px;background:rgba(168,85,247,0.15);color:var(--purple);display:grid;place-items:center;font-size:24px;flex-shrink:0">
                             <i class="bi bi-cash-stack"></i>
                         </div>
@@ -172,9 +160,6 @@ async function loadPendingTransfers() {
                             <span class="badge badge-pending"><i class="bi bi-hourglass-split"></i> En attente</span>
                             <span style="font-size:12px;color:var(--text-muted)">Transaction #${tx.id}</span>
                         </div>
-                        <div style="font-size:13px;color:var(--text-muted)">
-                            <strong>${tx.from_account_number || '—'}</strong>
-                        </div>
                     </div>
                     <div style="text-align:right">
                         <div class="pending-amount">${formatDNT(tx.amount)}</div>
@@ -214,7 +199,12 @@ async function loadPendingTransfers() {
 
 
 async function approveTransfer(id) {
-    if (!confirm(`Approuver le virement #${id} ?`)) return;
+    const ok = await askConfirm(
+        `Approuver et exécuter le virement #${id} ?`,
+        { title: 'Approuver le virement', confirmText: 'Approuver', danger: false }
+    );
+    if (!ok) return;
+
     try {
         await api.post(`/manager/transfers/${id}/approve`);
         showToast('Virement approuvé et exécuté !', 'success');
@@ -271,7 +261,10 @@ async function loadLoans() {
 }
 
 function filterLoans(filter, btn) {
-    document.querySelectorAll('.loan-filter').forEach(b => b.classList.remove('active', 'btn-primary'));
+    document.querySelectorAll('.loan-filter').forEach(b => {
+        b.classList.remove('active', 'btn-primary');
+        b.classList.add('btn-ghost');
+    });
     btn.classList.add('active', 'btn-primary');
     btn.classList.remove('btn-ghost');
     renderLoans(filter);
@@ -325,7 +318,12 @@ function renderLoans(filter) {
 
 
 async function approveLoan(id) {
-    if (!confirm(`Approuver le prêt #${id} ? Le montant sera crédité sur le compte du client.`)) return;
+    const ok = await askConfirm(
+        `Approuver le prêt #${id} ? Le montant sera crédité sur le compte du client.`,
+        { title: 'Approuver le prêt', confirmText: 'Approuver', danger: false }
+    );
+    if (!ok) return;
+
     try {
         await api.post(`/manager/loans/${id}/approve`, { comment: '' });
         showToast('Prêt approuvé et crédité !', 'success');
@@ -363,8 +361,6 @@ async function handleRejectLoan(e) {
 //  ACCOUNTS
 // ═══════════════════════════════════════════════════════════════
 
-let allAccounts = [];
-
 async function loadAccounts() {
     const c = document.getElementById('accountsContent');
     c.innerHTML = '<div class="loading">Chargement...</div>';
@@ -397,7 +393,7 @@ function renderAccounts(accounts) {
             </thead>
             <tbody>
                 ${accounts.map(a => `
-                    <tr class="acc-row" data-search="${a.owner_name} ${a.owner_email} ${a.account_number}">
+                    <tr class="acc-row">
                         <td class="td-muted">${a.id}</td>
                         <td>
                             <div style="font-weight:600">${a.owner_name || '—'}</div>
@@ -410,9 +406,7 @@ function renderAccounts(accounts) {
                             </span>
                         </td>
                         <td style="font-weight:700">${formatDNT(a.balance)}</td>
-                        <td>
-                            <span class="badge badge-${a.status}">${a.status}</span>
-                        </td>
+                        <td><span class="badge badge-${a.status}">${a.status}</span></td>
                         <td>
                             ${a.status !== 'closed' ? `
                                 <button class="btn btn-sm ${a.status === 'active' ? 'btn-ghost' : 'btn-success'}"
@@ -432,7 +426,16 @@ function renderAccounts(accounts) {
 
 async function toggleAccount(id, currentStatus) {
     const action = currentStatus === 'active' ? 'geler' : 'activer';
-    if (!confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} ce compte ?`)) return;
+    const ok = await askConfirm(
+        `Voulez-vous ${action} ce compte ?`,
+        {
+            title: currentStatus === 'active' ? 'Geler le compte' : 'Activer le compte',
+            confirmText: currentStatus === 'active' ? 'Geler' : 'Activer',
+            danger: currentStatus === 'active',
+        }
+    );
+    if (!ok) return;
+
     try {
         await api.post(`/manager/accounts/${id}/freeze`);
         showToast(`Compte ${currentStatus === 'active' ? 'gelé' : 'activé'}.`, 'success');
@@ -445,12 +448,11 @@ async function toggleAccount(id, currentStatus) {
 
 function filterAccounts(q) {
     q = q.toLowerCase();
-    const filtered = allAccounts.filter(a =>
+    renderAccounts(allAccounts.filter(a =>
         (a.owner_name || '').toLowerCase().includes(q) ||
         (a.owner_email || '').toLowerCase().includes(q) ||
         (a.account_number || '').toLowerCase().includes(q)
-    );
-    renderAccounts(filtered);
+    ));
 }
 
 
