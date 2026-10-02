@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>VaultBank — Test</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body style="padding:60px;text-align:center">
+    <h1>Frontend VaultBank ✅</h1>
+    <p style="color:var(--text-muted);margin:20px 0">
+        Serveur frontend : <strong>port 3000</strong> — Backend : <strong>port 5000</strong>
+    </p>
+
+    <button class="btn btn-primary" onclick="testApi()" style="margin-bottom:20px">
+        Tester la connexion à l'API
+    </button>
+
+    <pre id="result" style="background:rgba(255,255,255,0.05);padding:20px;border-radius:12px;
+        text-align:left;max-width:500px;margin:0 auto;font-size:13px;color:var(--teal)"></pre>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/main.js"></script>
+    <script>
+        async function testApi() {
+            const result = document.getElementById('result');
+            result.textContent = 'Test en cours...';
+            try {
+                const data = await api.get('/health');
+                result.textContent = '✅ ' + JSON.stringify(data, null, 2);
+                showToast('API connectée avec succès', 'success');
+            } catch (err) {
+                result.textContent = '❌ ' + err.message;
+                showToast('Erreur : ' + err.message, 'danger');
+            }
+        }
+    </script>
+</body>
+</html>
