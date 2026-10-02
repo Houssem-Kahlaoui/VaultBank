@@ -31,3 +31,5 @@ cd frontend
 python app.py
 → Interface : http://localhost:3000
 
+📐 Diagramme de classes
+https://docs/Class-Diagram.png
