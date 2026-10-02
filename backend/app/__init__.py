@@ -1,4 +1,3 @@
-
 from flask import Flask, jsonify
 from .config import Config
 from .extensions import db, migrate, jwt, cors
@@ -17,10 +16,16 @@ def create_app():
     jwt.init_app(app)
     cors.init_app(
         app,
-        resources={r"/api/*": {"origins": app.config['FRONTEND_URL']}},
+        resources={r"/api/*": {
+            "origins": [
+                "http://localhost:3000",
+                "http://127.0.0.1:3000",
+            ]
+        }},
         supports_credentials=True,
         allow_headers=["Content-Type", "Authorization"],
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        expose_headers=["Content-Type", "Authorization"],
     )
 
     # ── Register blueprints ──

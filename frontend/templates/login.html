@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Connexion — VaultBank{% endblock %}
+
+{% block extra_css %}
+<style>
+  .auth-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: var(--bg-deep);
+    position: relative;
+    overflow: hidden;
+  }
+  .auth-wrapper::before {
+    content: '';
+    position: absolute;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(79,172,254,0.15), transparent 70%);
+    top: -150px; left: -150px; border-radius: 50%;
+    filter: blur(60px);
+  }
+  .auth-wrapper::after {
+    content: '';
+    position: absolute;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(168,85,247,0.12), transparent 70%);
+    bottom: -100px; right: -100px; border-radius: 50%;
+    filter: blur(60px);
+  }
+  .auth-box {
+    width: 100%; max-width: 420px;
+    position: relative; z-index: 1;
+  }
+  .auth-logo-wrap {
+    text-align: center; margin-bottom: 28px;
+  }
+  .auth-logo-wrap .logo {
+    justify-content: center; margin-bottom: 12px;
+  }
+  .auth-logo-wrap .logo-text { font-size: 26px; }
+  .auth-logo-sub {
+    font-size: 13px; color: var(--text-muted);
+  }
+  .auth-card {
+    background: rgba(15,24,48,0.75);
+    border: 1px solid var(--border);
+    border-radius: var(--r-xl);
+    padding: 36px 32px;
+    backdrop-filter: blur(24px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .auth-title {
+    font-size: 22px; font-weight: 800;
+    letter-spacing: -0.5px; margin-bottom: 6px;
+  }
+  .auth-subtitle {
+    font-size: 13px; color: var(--text-muted); margin-bottom: 28px;
+  }
+  .auth-submit {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--blue), var(--cyan));
+    border: none; border-radius: 12px;
+    color: #fff; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: var(--trans);
+    box-shadow: 0 4px 20px rgba(79,172,254,0.4);
+    margin-top: 8px;
+  }
+  .auth-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(79,172,254,0.55);
+  }
+  .auth-submit:disabled {
+    opacity: 0.6; cursor: not-allowed; transform: none;
+  }
+  .auth-link {
+    text-align: center; margin-top: 22px;
+    font-size: 13px; color: var(--text-muted);
+  }
+  .auth-link a { color: var(--blue); font-weight: 600; }
+  .auth-link a:hover { color: var(--cyan); }
+
+  .input-icon-wrap { position: relative; }
+  .input-icon-wrap i {
+    position: absolute; left: 14px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim); font-size: 16px; pointer-events: none;
+  }
+  .input-icon-wrap .form-control { padding-left: 42px; }
+
+  .demo-box {
+    background: rgba(79,172,254,0.07);
+    border: 1px solid rgba(79,172,254,0.15);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 20px;
+  }
+  .demo-box h4 {
+    font-size: 12px; font-weight: 700; color: var(--blue);
+    margin-bottom: 8px;
+  }
+  .demo-row {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--text-muted);
+    padding: 3px 0;
+  }
+  .demo-row span:first-child { font-weight: 600; color: var(--text); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+  <div class="auth-box">
+
+    <div class="auth-logo-wrap">
+      <a href="/" class="logo">
+        <div class="logo-icon"><i class="bi bi-bank2"></i></div>
+        <span class="logo-text">VaultBank</span>
+      </a>
+      <div class="auth-logo-sub">Banque digitale sécurisée</div>
+    </div>
+
+    <div class="auth-card">
+      <h2 class="auth-title">Bienvenue</h2>
+      <p class="auth-subtitle">Connectez-vous à votre espace bancaire</p>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label">Adresse email</label>
+          <div class="input-icon-wrap">
+            <i class="bi bi-envelope"></i>
+            <input type="email" id="email" class="form-control"
+                   placeholder="votre@email.com" required autocomplete="email">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <div class="input-icon-wrap">
+            <i class="bi bi-lock"></i>
+            <input type="password" id="password" class="form-control"
+                   placeholder="••••••••" required autocomplete="current-password">
+          </div>
+        </div>
+
+        <button type="submit" class="auth-submit" id="submitBtn">
+          <i class="bi bi-box-arrow-in-right"></i> Se connecter
+        </button>
+      </form>
+
+      <div class="auth-link">
+        Pas encore de compte ? <a href="/register">Créer un compte</a>
+      </div>
+
+      <div class="demo-box">
+        <h4><i class="bi bi-info-circle"></i> Comptes de démonstration</h4>
+        <div class="demo-row"><span>👑 Admin</span><span>admin@vaultbank.tn / Admin123</span></div>
+        <div class="demo-row"><span>🗂️ Gestionnaire</span><span>gestionnaire@vaultbank.tn / Gest123</span></div>
+        <div class="demo-row"><span>👤 Client</span><span>youssef@vaultbank.tn / Client123</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btn      = document.getElementById('submitBtn');
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Connexion...';
+
+    try {
+      const data = await api.post('/auth/login', { email, password });
+
+      // Save tokens + user
+      setTokens(data.access_token, data.refresh_token);
+      setUser(data.user);
+
+      showToast('Connexion réussie !', 'success');
+
+      // Redirect based on role
+      const destinations = {
+        customer:     '/customer',
+        gestionnaire: '/manager',
+        admin:        '/admin',
+      };
+      const target = destinations[data.user.role] || '/';
+      setTimeout(() => window.location.href = target, 500);
+
+    } catch (err) {
+      showToast(err.message || 'Erreur de connexion', 'danger');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Se connecter';
+    }
+  });
+</script>
+{% endblock %}

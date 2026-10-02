@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Inscription — VaultBank{% endblock %}
+
+{% block extra_css %}
+<style>
+  .auth-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: var(--bg-deep);
+    position: relative;
+    overflow: hidden;
+  }
+  .auth-wrapper::before {
+    content: '';
+    position: absolute;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(79,172,254,0.15), transparent 70%);
+    top: -150px; left: -150px; border-radius: 50%;
+    filter: blur(60px);
+  }
+  .auth-wrapper::after {
+    content: '';
+    position: absolute;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(168,85,247,0.12), transparent 70%);
+    bottom: -100px; right: -100px; border-radius: 50%;
+    filter: blur(60px);
+  }
+  .auth-box {
+    width: 100%; max-width: 520px;
+    position: relative; z-index: 1;
+  }
+  .auth-logo-wrap { text-align: center; margin-bottom: 28px; }
+  .auth-logo-wrap .logo { justify-content: center; margin-bottom: 12px; }
+  .auth-logo-wrap .logo-text { font-size: 26px; }
+  .auth-logo-sub { font-size: 13px; color: var(--text-muted); }
+  .auth-card {
+    background: rgba(15,24,48,0.75);
+    border: 1px solid var(--border);
+    border-radius: var(--r-xl);
+    padding: 36px 32px;
+    backdrop-filter: blur(24px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .auth-title {
+    font-size: 22px; font-weight: 800;
+    letter-spacing: -0.5px; margin-bottom: 6px;
+  }
+  .auth-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; }
+  .auth-submit {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--blue), var(--cyan));
+    border: none; border-radius: 12px;
+    color: #fff; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: var(--trans);
+    box-shadow: 0 4px 20px rgba(79,172,254,0.4);
+    margin-top: 8px;
+  }
+  .auth-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(79,172,254,0.55);
+  }
+  .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .auth-link { text-align: center; margin-top: 22px; font-size: 13px; color: var(--text-muted); }
+  .auth-link a { color: var(--blue); font-weight: 600; }
+  .auth-link a:hover { color: var(--cyan); }
+  .input-icon-wrap { position: relative; }
+  .input-icon-wrap i {
+    position: absolute; left: 14px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim); font-size: 16px; pointer-events: none;
+  }
+  .input-icon-wrap .form-control { padding-left: 42px; }
+  .info-note {
+    background: rgba(79,172,254,0.07);
+    border: 1px solid rgba(79,172,254,0.15);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  #pwMatchMsg { font-size: 12px; margin-bottom: 10px; min-height: 16px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+  <div class="auth-box">
+
+    <div class="auth-logo-wrap">
+      <a href="/" class="logo">
+        <div class="logo-icon"><i class="bi bi-bank2"></i></div>
+        <span class="logo-text">VaultBank</span>
+      </a>
+      <div class="auth-logo-sub">Ouverture de compte gratuite</div>
+    </div>
+
+    <div class="auth-card">
+      <h2 class="auth-title">Créer un compte</h2>
+      <p class="auth-subtitle">Rejoignez VaultBank en moins de 2 minutes</p>
+
+      <form id="registerForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nom complet <span style="color:var(--danger)">*</span></label>
+            <div class="input-icon-wrap">
+              <i class="bi bi-person"></i>
+              <input type="text" id="full_name" class="form-control" placeholder="Prénom Nom" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Téléphone</label>
+            <div class="input-icon-wrap">
+              <i class="bi bi-phone"></i>
+              <input type="tel" id="phone" class="form-control" placeholder="+216 XX XXX XXX">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Adresse email <span style="color:var(--danger)">*</span></label>
+          <div class="input-icon-wrap">
+            <i class="bi bi-envelope"></i>
+            <input type="email" id="email" class="form-control" placeholder="votre@email.com" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Adresse postale</label>
+          <div class="input-icon-wrap">
+            <i class="bi bi-geo-alt"></i>
+            <input type="text" id="address" class="form-control" placeholder="Rue, Ville">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Mot de passe <span style="color:var(--danger)">*</span></label>
+            <div class="input-icon-wrap">
+              <i class="bi bi-lock"></i>
+              <input type="password" id="password" class="form-control" placeholder="Min. 6 caractères" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirmer <span style="color:var(--danger)">*</span></label>
+            <div class="input-icon-wrap">
+              <i class="bi bi-lock-fill"></i>
+              <input type="password" id="confirm_password" class="form-control" placeholder="Répéter" required>
+            </div>
+          </div>
+        </div>
+
+        <div id="pwMatchMsg"></div>
+
+        <div class="info-note">
+          <i class="bi bi-info-circle" style="color:var(--blue)"></i>
+          Un <strong>compte courant</strong> sera automatiquement créé à votre inscription.
+        </div>
+
+        <button type="submit" class="auth-submit" id="submitBtn">
+          <i class="bi bi-person-check"></i> Créer mon compte
+        </button>
+      </form>
+
+      <div class="auth-link">
+        Déjà inscrit ? <a href="/login">Se connecter</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ── Password match check ──
+  const pw  = document.getElementById('password');
+  const cf  = document.getElementById('confirm_password');
+  const msg = document.getElementById('pwMatchMsg');
+
+  function checkMatch() {
+    if (!cf.value) { msg.textContent = ''; return; }
+    if (pw.value === cf.value) {
+      msg.innerHTML = '<span style="color:var(--teal)"><i class="bi bi-check-circle"></i> Les mots de passe correspondent</span>';
+    } else {
+      msg.innerHTML = '<span style="color:var(--danger)"><i class="bi bi-x-circle"></i> Ne correspondent pas</span>';
+    }
+  }
+  pw.addEventListener('input', checkMatch);
+  cf.addEventListener('input', checkMatch);
+
+
+  // ── Submit ──
+  document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const full_name        = document.getElementById('full_name').value.trim();
+    const email            = document.getElementById('email').value.trim();
+    const password         = pw.value;
+    const confirm_password = cf.value;
+    const phone            = document.getElementById('phone').value.trim();
+    const address          = document.getElementById('address').value.trim();
+
+    if (password !== confirm_password) {
+      showToast('Les mots de passe ne correspondent pas.', 'danger');
+      return;
+    }
+    if (password.length < 6) {
+      showToast('Le mot de passe doit contenir au moins 6 caractères.', 'danger');
+      return;
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Création...';
+
+    try {
+      await api.post('/auth/register', {
+        full_name, email, password, phone, address,
+      });
+
+      showToast('Compte créé avec succès ! Redirection...', 'success');
+      setTimeout(() => window.location.href = '/login', 1500);
+
+    } catch (err) {
+      showToast(err.message || 'Erreur lors de la création', 'danger');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-person-check"></i> Créer mon compte';
+    }
+  });
+</script>
+{% endblock %}
