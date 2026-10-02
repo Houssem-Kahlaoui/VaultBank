@@ -1,0 +1,399 @@
+{% extends "base.html" %}
+
+{% block title %}Administration — VaultBank{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ═══════════ LAYOUT ═══════════ */
+  .app-layout { display: flex; min-height: 100vh; }
+
+  /* ═══════════ SIDEBAR ═══════════ */
+  .sidebar {
+    width: 260px; min-height: 100vh;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    position: fixed; top: 0; left: 0; z-index: 100;
+    backdrop-filter: blur(20px);
+    transition: width 0.3s var(--ease);
+  }
+  .sidebar.collapsed { width: 72px; }
+  .sidebar.collapsed .logo-text,
+  .sidebar.collapsed .nav-label,
+  .sidebar.collapsed .user-details,
+  .sidebar.collapsed .sidebar-section-title { display: none; }
+  .sidebar.collapsed .nav-link { justify-content: center; padding: 14px; }
+
+  .sidebar-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 18px; border-bottom: 1px solid var(--border);
+  }
+  .sidebar-toggle {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); font-size: 18px; padding: 4px;
+    transition: var(--trans);
+  }
+  .sidebar-toggle:hover { color: var(--amber); }
+
+  .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+  .sidebar-section-title {
+    font-size: 10px; font-weight: 600;
+    color: var(--text-dim); letter-spacing: 1.5px;
+    padding: 16px 20px 6px; text-transform: uppercase;
+  }
+  .nav-link {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 18px; margin: 2px 10px;
+    border-radius: var(--r);
+    color: var(--text-muted); font-size: 14px; font-weight: 500;
+    transition: var(--trans); cursor: pointer;
+    position: relative; text-decoration: none;
+  }
+  .nav-link i { font-size: 18px; flex-shrink: 0; }
+  .nav-link:hover { background: var(--bg-card-hov); color: var(--text); }
+  .nav-link.active {
+    background: linear-gradient(135deg, rgba(245,158,11,0.18), rgba(79,172,254,0.08));
+    color: var(--amber);
+    border: 1px solid rgba(245,158,11,0.2);
+  }
+  .nav-link.active::before {
+    content: ''; position: absolute; left: 0; top: 20%; bottom: 20%;
+    width: 3px; border-radius: 0 3px 3px 0; background: var(--amber);
+  }
+
+  .sidebar-footer {
+    border-top: 1px solid var(--border);
+    padding: 16px 18px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .user-info { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--amber), var(--danger));
+    display: grid; place-items: center;
+    font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .user-details { overflow: hidden; }
+  .user-name { display: block; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-role { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 8px; border-radius: 20px; margin-top: 2px; }
+  .logout-btn { color: var(--text-muted); font-size: 20px; padding: 6px; border-radius: 8px; transition: var(--trans); }
+  .logout-btn:hover { color: var(--danger); background: rgba(255,71,87,0.1); }
+
+  /* ═══════════ MAIN ═══════════ */
+  .main-content {
+    margin-left: 260px; flex: 1;
+    display: flex; flex-direction: column;
+    transition: margin-left 0.3s var(--ease);
+  }
+  .main-content.expanded { margin-left: 72px; }
+
+  .topbar {
+    height: 64px;
+    background: rgba(10,16,32,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .page-title { font-size: 18px; font-weight: 700; }
+  .content-wrapper { padding: 28px; flex: 1; }
+
+  /* ═══════════ STATS ═══════════ */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px,1fr));
+    gap: 18px; margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 22px;
+    display: flex; align-items: center; gap: 16px;
+    transition: var(--trans); cursor: pointer;
+  }
+  .stat-card:hover { border-color: var(--border-hov); transform: translateY(-2px); }
+  .stat-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: grid; place-items: center; font-size: 22px; flex-shrink: 0;
+  }
+  .stat-icon.blue   { background: rgba(79,172,254,0.15); color: var(--blue); }
+  .stat-icon.teal   { background: rgba(0,201,167,0.15);  color: var(--teal); }
+  .stat-icon.purple { background: rgba(168,85,247,0.15); color: var(--purple); }
+  .stat-icon.amber  { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .stat-icon.danger { background: rgba(255,71,87,0.15);  color: var(--danger); }
+  .stat-icon.cyan   { background: rgba(0,242,254,0.15);  color: var(--cyan); }
+  .stat-info .stat-value { font-size: 26px; font-weight: 800; letter-spacing: -1px; }
+  .stat-info .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ═══════════ PAGE HEADER ═══════════ */
+  .page-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 24px; gap: 16px; flex-wrap: wrap;
+  }
+  .page-header-info h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .page-header-info p  { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+  /* ═══════════ TABLE ═══════════ */
+  .table-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+  }
+
+  /* ═══════════ MODAL ═══════════ */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    display: none; place-items: center;
+  }
+  .modal-overlay.open { display: grid; }
+  .modal {
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: var(--r-xl); padding: 28px;
+    width: min(500px, 95vw); max-height: 90vh; overflow-y: auto;
+    animation: modalIn 0.25s var(--ease);
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .modal-title { font-size: 17px; font-weight: 700; }
+  .modal-close { background: none; border: none; cursor: pointer; font-size: 20px; color: var(--text-muted); }
+  .modal-close:hover { color: var(--danger); }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+  /* ═══════════ ACTION LOG ═══════════ */
+  .action-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+  }
+
+  /* ═══════════ RESPONSIVE ═══════════ */
+  @media (max-width: 900px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.mobile-open { transform: translateX(0); }
+    .main-content { margin-left: 0; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="app-layout">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="/admin" class="logo">
+        <div class="logo-icon"><i class="bi bi-bank2"></i></div>
+        <span class="logo-text">VaultBank</span>
+      </a>
+      <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-title">Administration</div>
+      <a href="#dashboard"    class="nav-link"><i class="bi bi-bar-chart-line"></i><span class="nav-label">Tableau de bord</span></a>
+      <a href="#users"        class="nav-link"><i class="bi bi-people"></i><span class="nav-label">Utilisateurs</span></a>
+      <a href="#accounts"     class="nav-link"><i class="bi bi-wallet2"></i><span class="nav-label">Comptes bancaires</span></a>
+      <a href="#transactions" class="nav-link"><i class="bi bi-arrow-left-right"></i><span class="nav-label">Transactions</span></a>
+      <a href="#logs"         class="nav-link"><i class="bi bi-journal-text"></i><span class="nav-label">Journaux d'audit</span></a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar" data-user-initial>A</div>
+        <div class="user-details">
+          <span class="user-name" data-user-name>Admin</span>
+          <span class="user-role badge-admin">Admin</span>
+        </div>
+      </div>
+      <a href="#" onclick="logout(); return false" class="logout-btn" title="Déconnexion">
+        <i class="bi bi-box-arrow-right"></i>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="main-content" id="mainContent">
+    <header class="topbar">
+      <h1 class="page-title" id="pageTitle">Tableau de bord</h1>
+    </header>
+
+    <div class="content-wrapper">
+
+      <!-- ═══════════ PAGE: DASHBOARD ═══════════ -->
+      <div id="page-dashboard" class="page active">
+        <div id="dashboardContent">
+          <div class="loading">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- ═══════════ PAGE: USERS ═══════════ -->
+      <div id="page-users" class="page">
+        <div class="page-header">
+          <div class="page-header-info">
+            <h2>Utilisateurs</h2>
+            <p id="usersCount">Chargement...</p>
+          </div>
+          <button class="btn btn-primary" onclick="openCreateUserModal()">
+            <i class="bi bi-person-plus"></i> Nouvel utilisateur
+          </button>
+        </div>
+        <div style="margin-bottom:16px">
+          <input type="text" id="userSearch" class="form-control"
+                 placeholder="🔍 Rechercher par nom, email ou rôle..."
+                 oninput="filterUsers(this.value)" style="max-width:400px">
+        </div>
+        <div class="table-container" id="usersContent">
+          <div class="loading">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- ═══════════ PAGE: ACCOUNTS ═══════════ -->
+      <div id="page-accounts" class="page">
+        <div class="page-header">
+          <div class="page-header-info">
+            <h2>Comptes bancaires</h2>
+            <p id="accountsCount">Chargement...</p>
+          </div>
+        </div>
+        <div style="margin-bottom:16px">
+          <input type="text" id="accSearch" class="form-control"
+                 placeholder="🔍 Rechercher par titulaire, email ou n° compte..."
+                 oninput="filterAccounts(this.value)" style="max-width:400px">
+        </div>
+        <div class="table-container" id="accountsContent">
+          <div class="loading">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- ═══════════ PAGE: TRANSACTIONS ═══════════ -->
+      <div id="page-transactions" class="page">
+        <div class="page-header">
+          <div class="page-header-info">
+            <h2>Transactions</h2>
+            <p id="transactionsCount">Chargement...</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+          <button class="btn btn-sm btn-ghost tx-filter active" data-status="" onclick="filterTx('', this)">Toutes</button>
+          <button class="btn btn-sm btn-ghost tx-filter" data-status="pending"   onclick="filterTx('pending', this)">En attente</button>
+          <button class="btn btn-sm btn-ghost tx-filter" data-status="completed" onclick="filterTx('completed', this)">Complétées</button>
+          <button class="btn btn-sm btn-ghost tx-filter" data-status="rejected"  onclick="filterTx('rejected', this)">Rejetées</button>
+        </div>
+        <div class="table-container" id="transactionsContent">
+          <div class="loading">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- ═══════════ PAGE: LOGS ═══════════ -->
+      <div id="page-logs" class="page">
+        <div class="page-header">
+          <div class="page-header-info">
+            <h2>Journaux d'audit</h2>
+            <p id="logsCount">Chargement...</p>
+          </div>
+        </div>
+        <div style="margin-bottom:16px">
+          <input type="text" id="logSearch" class="form-control"
+                 placeholder="🔍 Rechercher action, utilisateur, IP..."
+                 oninput="filterLogs(this.value)" style="max-width:400px">
+        </div>
+        <div class="table-container" id="logsContent">
+          <div class="loading">Chargement...</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ═══════════ MODAL: CREATE USER ═══════════ -->
+  <div class="modal-overlay" id="createUserModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title"><i class="bi bi-person-plus" style="color:var(--blue)"></i> Créer un utilisateur</div>
+        <button class="modal-close" onclick="closeModal('createUserModal')"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <form id="createUserForm">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="form-group">
+            <label class="form-label">Nom complet <span style="color:var(--danger)">*</span></label>
+            <input type="text" id="new_full_name" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Téléphone</label>
+            <input type="tel" id="new_phone" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email <span style="color:var(--danger)">*</span></label>
+          <input type="email" id="new_email" class="form-control" required>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="form-group">
+            <label class="form-label">Mot de passe <span style="color:var(--danger)">*</span></label>
+            <input type="password" id="new_password" class="form-control" required minlength="6">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rôle <span style="color:var(--danger)">*</span></label>
+            <select id="new_role" class="form-control" required>
+              <option value="customer">Client</option>
+              <option value="gestionnaire">Gestionnaire</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+        <div style="background:rgba(79,172,254,0.07);border:1px solid rgba(79,172,254,0.15);
+                    border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:var(--text-muted)">
+          <i class="bi bi-info-circle" style="color:var(--blue)"></i>
+          Un compte courant sera automatiquement créé si le rôle est <strong>Client</strong>.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('createUserModal')">Annuler</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-person-plus"></i> Créer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════ MODAL: CREDIT ACCOUNT ═══════════ -->
+  <div class="modal-overlay" id="creditModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title"><i class="bi bi-plus-circle" style="color:var(--teal)"></i> Créditer le compte</div>
+        <button class="modal-close" onclick="closeModal('creditModal')"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px" id="creditModalInfo"></p>
+      <form id="creditForm">
+        <div class="form-group">
+          <label class="form-label">Montant à créditer (DNT) <span style="color:var(--danger)">*</span></label>
+          <input type="number" id="credit_amount" class="form-control"
+                 placeholder="Ex: 50000" min="1" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <input type="text" id="credit_description" class="form-control"
+                 placeholder="Ex: Dépôt initial" value="Dépôt administratif">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('creditModal')">Annuler</button>
+          <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Créditer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<script src="/static/js/admin.js"></script>
+{% endblock %}
